@@ -44,6 +44,7 @@ func NewSpec(api *gmail.Service, db *db.DB) (spec Spec, err error) {
 	return
 }
 
+// Apply Creates labels and filters for the spec.yaml
 func (s *Spec) Apply() (err error) {
 	timeAgo := time.Now().Add(time.Duration(-3) * time.Hour)
 	refreshTimestamp, err := s.getTimestamp("refresh")
