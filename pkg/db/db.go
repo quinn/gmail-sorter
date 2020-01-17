@@ -64,8 +64,8 @@ func (d *DB) Get(bucket string, key string) (bytes []byte, err error) {
 }
 
 // Close closes boltdb
-func (d *DB) Close() {
-	d.db.Close()
+func (d *DB) Close() error {
+	return d.db.Close()
 }
 
 func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {

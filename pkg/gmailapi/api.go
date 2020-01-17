@@ -84,7 +84,10 @@ func Start() (service *gmail.Service, err error) {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, gmail.GmailModifyScope)
+	config, err := google.ConfigFromJSON(b,
+		gmail.GmailModifyScope,
+		gmail.GmailSettingsBasicScope,
+	)
 
 	if err != nil {
 		return nil, errors.Errorf("Unable to parse client secret file to config: %v", err)

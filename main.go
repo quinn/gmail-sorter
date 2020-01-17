@@ -4,9 +4,13 @@ import (
 	"github.com/quinn/gmail-sorter/pkg/core"
 	"github.com/quinn/gmail-sorter/pkg/db"
 	"github.com/quinn/gmail-sorter/pkg/gmailapi"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
+	log.Info("starting main")
+
 	var err error
 	api, err := gmailapi.Start()
 
@@ -15,17 +19,26 @@ func main() {
 	}
 
 	db := db.NewDB()
-	defer db.Close()
+	log.Info("connected to database")
+
+	defer func() {
+		log.Info("closing database")
+		err = db.Close()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	spec, err := core.NewSpec(api, db)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = spec.Apply()
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
