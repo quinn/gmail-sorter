@@ -68,6 +68,7 @@ func (d *DB) Close() error {
 	return d.db.Close()
 }
 
+// GetAll retrieve all of the objects for the given bucket name
 func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {
 	err = d.db.View(func(tx *bolt.Tx) (err error) {
 		b, err := d.bucket(tx, bucket)
