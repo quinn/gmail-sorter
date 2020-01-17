@@ -17,15 +17,15 @@ import (
 // Spec represents the spec.yaml
 type Spec struct {
 	Domains []string `yaml:"domains"`
+	Delete  []string `yaml:"delete"`
 	api     *gmail.Service
 	db      *db.DB
 }
 
 const timeFormat = "Mon Jan 2 15:04:05 -0700 MST 2006"
-const testlabelname = "stackoverflow.email"
 
 func NewSpec(api *gmail.Service, db *db.DB) (spec Spec, err error) {
-	log.Info("Starting new spec")
+	log.Info("starting new spec")
 	bytes, err := ioutil.ReadFile("./spec.yaml")
 	spec.api = api
 	spec.db = db
@@ -44,14 +44,14 @@ func NewSpec(api *gmail.Service, db *db.DB) (spec Spec, err error) {
 }
 
 func (s *Spec) Apply() (err error) {
-	oneMinuteAgo := time.Now().Add(time.Duration(-3) * time.Hour)
+	timeAgo := time.Now().Add(time.Duration(-3) * time.Hour)
 	refreshTimestamp, err := s.getTimestamp("refresh")
 
 	if err != nil {
 		return
 	}
 
-	if refreshTimestamp == nil || refreshTimestamp.Before(oneMinuteAgo) {
+	if refreshTimestamp == nil || refreshTimestamp.Before(timeAgo) {
 		err = s.refreshLabels()
 
 		if err != nil {
@@ -71,7 +71,13 @@ func (s *Spec) Apply() (err error) {
 		}
 	}
 
-	return s.createDomainFilter(testlabelname)
+	for _, domain := range s.Domains {
+		if err := s.createDomainFilter(domain); err != nil {
+			return err
+		}
+	}
+
+	return
 }
 
 func (s *Spec) refreshLabels() (err error) {
@@ -174,32 +180,35 @@ func (s *Spec) findOrCreateLabel(labelName string) (label *gmail.Label, err erro
 	return
 }
 
-func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) (filter *gmail.Filter, err error) {
-	filters, err := s.db.GetAll("labels")
+func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) (_ *gmail.Filter, err error) {
+	filters, err := s.db.GetAll("filters")
 
 	if err != nil {
 		return
 	}
 
 	for _, bytes := range filters {
-		var f gmail.Filter
-		err = yaml.Unmarshal(bytes, &f)
-		filter = &f
+		var filter gmail.Filter
+		err = yaml.Unmarshal(bytes, &filter)
 
 		if err != nil {
 			return
 		}
 
-		if filter.Action != nil && filter.Action.AddLabelIds[0] == label.Id {
-			log.Info("Matched label!")
+		// spew.Dump(label.Id)
+		// spew.Dump(filter)
+		// spew.Dump(filter.Id)
+
+		if filter.Action != nil && len(filter.Action.AddLabelIds) != 0 && filter.Action.AddLabelIds[0] == label.Id {
+			log.Info("matched label!")
 			return
 		}
 	}
 
-	filter, err = s.api.Users.Settings.Filters.Create("me", filterSpec).Do()
+	filter, err := s.api.Users.Settings.Filters.Create("me", filterSpec).Do()
 
 	if err != nil {
-		err = errors.Errorf("Could not create filter: %s", err)
+		err = errors.Errorf("could not create filter for %s: %s", label.Name, err)
 		return
 	}
 
@@ -241,21 +250,48 @@ func (s *Spec) createDomainFilter(domain string) (err error) {
 		return
 	}
 
+	pageToken := ""
 	query := fmt.Sprintf("from:%s", domain)
-	res, err := s.api.Users.Messages.List("me").
-		MaxResults(5).
-		Q(query).
-		Do()
 
-	if err != nil {
-		return
+	for {
+		var res *gmail.ListMessagesResponse
+
+		res, err = s.api.Users.Messages.List("me").
+			MaxResults(50).
+			PageToken(pageToken).
+			Q(query).
+			Do()
+
+		if err != nil {
+			return
+		}
+
+		var ids []string
+		for _, message := range res.Messages {
+			ids = append(ids, message.Id)
+		}
+
+		if len(ids) == 0 {
+			break
+		}
+
+		pageToken = res.NextPageToken
+
+		err = s.api.Users.Messages.BatchModify("me", &gmail.BatchModifyMessagesRequest{
+			AddLabelIds: []string{label.Id},
+			Ids:         ids,
+		}).Do()
+
+		if err != nil {
+			return
+		}
+
+		if pageToken == "" {
+			break
+		} else {
+			log.Infof("continuing to next page for %s", domain)
+		}
 	}
-
-	spew.Dump(res)
-
-	s.api.Users.Messages.BatchModify("me", &gmail.BatchModifyMessagesRequest{
-		AddLabelIds: []string{label.Id},
-	})
 
 	return
 }
