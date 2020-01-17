@@ -24,6 +24,7 @@ type Spec struct {
 
 const timeFormat = "Mon Jan 2 15:04:05 -0700 MST 2006"
 
+// NewSpec loads the spec.yaml
 func NewSpec(api *gmail.Service, db *db.DB) (spec Spec, err error) {
 	log.Info("starting new spec")
 	bytes, err := ioutil.ReadFile("./spec.yaml")
