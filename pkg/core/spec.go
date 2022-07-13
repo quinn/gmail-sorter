@@ -3,6 +3,8 @@ package core
 import (
 	"fmt"
 	"io/ioutil"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -16,60 +18,62 @@ import (
 
 // Spec represents the spec.yaml
 type Spec struct {
-	Domains []string `yaml:"domains"`
-	Delete  []string `yaml:"delete"`
-	api     *gmail.Service
-	db      *db.DB
+	Domains     []string `yaml:"domains"`
+	Delete      []string `yaml:"delete"`
+	Newsletters []string `yaml:"newsletters"`
+	api         *gmail.Service
+	db          *db.DB
 }
 
 const timeFormat = "Mon Jan 2 15:04:05 -0700 MST 2006"
 
 // NewSpec loads the spec.yaml
-func NewSpec(api *gmail.Service, db *db.DB) (spec Spec, err error) {
+func NewSpec(api *gmail.Service, db *db.DB) (*Spec, error) {
+	log.SetLevel(log.DebugLevel)
 	log.Info("starting new spec")
+
 	bytes, err := ioutil.ReadFile("./spec.yaml")
-	spec.api = api
-	spec.db = db
-
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
 
-	err = yaml.Unmarshal(bytes, &spec)
-
-	if err != nil {
-		return
+	spec := &Spec{
+		api: api,
+		db:  db,
 	}
 
-	return
+	err = yaml.Unmarshal(bytes, spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %v", err)
+	}
+
+	return spec, nil
 }
 
 // Apply Creates labels and filters for the spec.yaml
-func (s *Spec) Apply() (err error) {
+func (s *Spec) Apply() error {
 	timeAgo := time.Now().Add(time.Duration(-3) * time.Hour)
 	refreshTimestamp, err := s.getTimestamp("refresh")
-
 	if err != nil {
-		return
+		return fmt.Errorf("failed to get timestamp: %v", err)
 	}
 
 	if refreshTimestamp == nil || refreshTimestamp.Before(timeAgo) {
-		err = s.refreshLabels()
+		log.Debug("refresh time has expired. refreshing")
 
+		err = s.refreshLabels()
 		if err != nil {
-			return
+			return err
 		}
 
 		err = s.refreshFilters()
-
 		if err != nil {
-			return
+			return err
 		}
 
 		_, err = s.setTimestamp("refresh")
-
 		if err != nil {
-			return
+			return err
 		}
 	}
 
@@ -79,15 +83,21 @@ func (s *Spec) Apply() (err error) {
 		}
 	}
 
-	return
+	for _, newsletterDomain := range s.Newsletters {
+		if err := s.createNewsletterFilter(newsletterDomain); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (s *Spec) refreshLabels() (err error) {
+func (s *Spec) refreshLabels() error {
 	log.Info("refreshing labels")
 	r, err := s.api.Users.Labels.List("me").Do()
 
 	if err != nil {
-		return
+		return fmt.Errorf("failed to list labels: %v", err)
 	}
 
 	for _, label := range r.Labels {
@@ -95,17 +105,17 @@ func (s *Spec) refreshLabels() (err error) {
 		d, err = yaml.Marshal(label)
 
 		if err != nil {
-			return
+			return err
 		}
 
 		err = s.db.Upsert("labels", label.Id, d)
 
 		if err != nil {
-			return
+			return err
 		}
 	}
 
-	return
+	return nil
 }
 
 func (s *Spec) refreshFilters() (err error) {
@@ -134,59 +144,56 @@ func (s *Spec) refreshFilters() (err error) {
 	return
 }
 
-func (s *Spec) findOrCreateLabel(labelName string) (label *gmail.Label, err error) {
+func (s *Spec) findOrCreateLabel(labelName string) (*gmail.Label, error) {
 	labels, err := s.db.GetAll("labels")
-
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed db getAll labels: %v", err)
 	}
 
 	for _, bytes := range labels {
-		var l gmail.Label
-		err = yaml.Unmarshal(bytes, &l)
-		label = &l
+		var label gmail.Label
+		err = yaml.Unmarshal(bytes, &label)
 
 		if err != nil {
-			return
+			return nil, fmt.Errorf("failed to unmarshal label: %v", err)
 		}
 
-		if label.Name == labelName {
-			return
+		if strings.EqualFold(label.Name, labelName) {
+			return &label, nil
 		}
 	}
 
-	label = &gmail.Label{
+	label := &gmail.Label{
 		Name:                  labelName,
 		LabelListVisibility:   "labelShow",
 		MessageListVisibility: "show",
 	}
 
-	label, err = s.api.Users.Labels.Create("me", label).Do()
-
+	createdLabel, err := s.api.Users.Labels.Create("me", label).Do()
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to create label \"%s\" in gmail: %v", label.Name, err)
+	} else {
+		label = createdLabel
 	}
 
 	d, err := yaml.Marshal(label)
-
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to unmarshal: %v", err)
 	}
 
 	err = s.db.Upsert("labels", label.Id, d)
-
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to upsert: %v", err)
 	}
 
-	return
+	return label, nil
 }
 
-func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) (_ *gmail.Filter, err error) {
+func (s *Spec) findOrCreateFilter(filterSpec *gmail.Filter) (_ *gmail.Filter, err error) {
 	filters, err := s.db.GetAll("filters")
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to get all filters: %v", err)
 	}
 
 	for _, bytes := range filters {
@@ -194,15 +201,26 @@ func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) 
 		err = yaml.Unmarshal(bytes, &filter)
 
 		if err != nil {
-			return
+			return nil, fmt.Errorf("failed to unmarshal: %v", err)
 		}
 
-		// spew.Dump(label.Id)
-		// spew.Dump(filter)
-		// spew.Dump(filter.Id)
+		match := false
 
-		if filter.Action != nil && len(filter.Action.AddLabelIds) != 0 && filter.Action.AddLabelIds[0] == label.Id {
-			log.Info("matched label!")
+		if filterSpec.Action.AddLabelIds == nil {
+			filterSpec.Action.AddLabelIds = []string{}
+		}
+
+		if filterSpec.Action.RemoveLabelIds == nil {
+			filterSpec.Action.RemoveLabelIds = []string{}
+		}
+
+		if reflect.DeepEqual(filter.Action.AddLabelIds, filterSpec.Action.AddLabelIds) &&
+			reflect.DeepEqual(filter.Action.RemoveLabelIds, filterSpec.Action.RemoveLabelIds) {
+			match = true
+		}
+
+		if match {
+			log.Debug("matched filter!")
 			return
 		}
 	}
@@ -210,12 +228,11 @@ func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) 
 	filter, err := s.api.Users.Settings.Filters.Create("me", filterSpec).Do()
 
 	if err != nil {
-		err = errors.Errorf("could not create filter for %s: %s", label.Name, err)
+		err = errors.Errorf("could not create filter: %v\n%v", err, filterSpec)
 		return
 	}
 
 	d, err := yaml.Marshal(filter)
-
 	if err != nil {
 		return
 	}
@@ -229,12 +246,38 @@ func (s *Spec) findOrCreateFilter(label *gmail.Label, filterSpec *gmail.Filter) 
 	return
 }
 
-func (s *Spec) createDomainFilter(domain string) (err error) {
+func (s *Spec) createNewsletterFilter(domain string) error {
+	labelName := "Newsletters"
+	label, err := s.findOrCreateLabel(labelName)
+	if err != nil {
+		return err
+	}
+
+	filterSpec := gmail.Filter{
+		Action: &gmail.FilterAction{
+			AddLabelIds:    []string{label.Id},
+			RemoveLabelIds: []string{"INBOX"},
+		},
+		Criteria: &gmail.FilterCriteria{
+			From: domain,
+		},
+	}
+
+	query := fmt.Sprintf("from:%s in:inbox", domain)
+
+	batch := gmail.BatchModifyMessagesRequest{
+		AddLabelIds:    []string{label.Id},
+		RemoveLabelIds: []string{"INBOX"},
+	}
+
+	return s.applyFilter(&filterSpec, query, batch)
+}
+
+func (s *Spec) createDomainFilter(domain string) error {
 	labelName := fmt.Sprintf("Domains/%s", domain)
 	label, err := s.findOrCreateLabel(labelName)
-
 	if err != nil {
-		return
+		return err
 	}
 
 	filterSpec := gmail.Filter{
@@ -246,14 +289,22 @@ func (s *Spec) createDomainFilter(domain string) (err error) {
 		},
 	}
 
-	_, err = s.findOrCreateFilter(label, &filterSpec)
+	query := fmt.Sprintf("from:%s in:inbox", domain)
 
+	batch := gmail.BatchModifyMessagesRequest{
+		AddLabelIds: []string{label.Id},
+	}
+
+	return s.applyFilter(&filterSpec, query, batch)
+}
+
+func (s *Spec) applyFilter(filterSpec *gmail.Filter, query string, batch gmail.BatchModifyMessagesRequest) error {
+	_, err := s.findOrCreateFilter(filterSpec)
 	if err != nil {
-		return
+		return err
 	}
 
 	pageToken := ""
-	query := fmt.Sprintf("from:%s", domain)
 
 	for {
 		var res *gmail.ListMessagesResponse
@@ -265,7 +316,7 @@ func (s *Spec) createDomainFilter(domain string) (err error) {
 			Do()
 
 		if err != nil {
-			return
+			return fmt.Errorf("failed to list messages: %v", err)
 		}
 
 		var ids []string
@@ -279,53 +330,51 @@ func (s *Spec) createDomainFilter(domain string) (err error) {
 
 		pageToken = res.NextPageToken
 
-		err = s.api.Users.Messages.BatchModify("me", &gmail.BatchModifyMessagesRequest{
-			AddLabelIds: []string{label.Id},
-			Ids:         ids,
-		}).Do()
+		batch.Ids = ids
+
+		err = s.api.Users.Messages.BatchModify("me", &batch).Do()
 
 		if err != nil {
-			return
+			return fmt.Errorf("failed to batch modify: %v", err)
 		}
 
 		if pageToken == "" {
 			break
 		} else {
-			log.Infof("continuing to next page for %s", domain)
+			log.Debugf("continuing to next page: \"%s\"", query)
 		}
 	}
 
-	return
+	return nil
 }
 
-func (s *Spec) getTimestamp(name string) (_ *time.Time, err error) {
+func (s *Spec) getTimestamp(name string) (*time.Time, error) {
 	bytes, err := s.db.Get("timestamps", name)
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed db get: %v", err)
 	}
 
 	if bytes == nil {
-		return
+		return nil, nil
 	}
 
 	timestamp, err := time.Parse(timeFormat, string(bytes))
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to parse time: %v", err)
 	}
 
 	return &timestamp, nil
 }
 
-func (s *Spec) setTimestamp(name string) (now time.Time, err error) {
-	now = time.Now()
+func (s *Spec) setTimestamp(name string) (time.Time, error) {
+	now := time.Now()
 	str := now.Format(timeFormat)
-	err = s.db.Upsert("timestamps", name, []byte(str))
-
+	err := s.db.Upsert("timestamps", name, []byte(str))
 	if err != nil {
-		return
+		return time.Time{}, fmt.Errorf("failed db upsert: %v", err)
 	}
 
-	return
+	return now, nil
 }
