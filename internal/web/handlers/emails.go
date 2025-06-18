@@ -4,27 +4,16 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 // EmailResponse represents the JSON structure for an email.
-type EmailResponse struct {
-	ID       string `json:"id"`
-	ThreadID string `json:"threadId"`
-	From     string `json:"from"`
-	To       string `json:"to,omitempty"`
-	Subject  string `json:"subject"`
-	Date     string `json:"date"`
-	Snippet  string `json:"snippet"`
-}
 
 // EmailsHandler returns a JSON list of emails from all connected accounts.
 func (h *Handler) EmailsHandler(c echo.Context) error {
-	if h.spec == nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "spec not set in handler"})
-	}
-
 	// Fetch emails using Gmail API
-	var emails []EmailResponse
+	var emails []models.EmailResponse
 	api := h.spec.GmailService()
 
 	res, err := api.Users.Messages.List("me").MaxResults(50).Do()
@@ -49,7 +38,7 @@ func (h *Handler) EmailsHandler(c echo.Context) error {
 				date = h.Value
 			}
 		}
-		emails = append(emails, EmailResponse{
+		emails = append(emails, models.EmailResponse{
 			ID:       fullMsg.Id,
 			ThreadID: fullMsg.ThreadId,
 			From:     from,
@@ -60,5 +49,5 @@ func (h *Handler) EmailsHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, emails)
+	return pages.Emails(emails).Render(c.Request().Context(), c.Response().Writer)
 }
