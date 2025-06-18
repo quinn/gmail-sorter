@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -32,7 +32,7 @@ func NewSpec(api *gmail.Service, db *db.DB) (*Spec, error) {
 	log.SetLevel(log.DebugLevel)
 	log.Info("starting new spec")
 
-	bytes, err := ioutil.ReadFile("./spec.yaml")
+	bytes, err := os.ReadFile("./spec.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
