@@ -1,0 +1,15 @@
+package pages
+
+import "go.quinn.io/ccf/assets"
+
+templ Home() {
+	<html>
+		<head>
+			<title>Golden Stack</title>
+			<link rel="stylesheet" href={ assets.Path("styles.css") }/>
+		</head>
+		<body>
+			<h1>Welcome to Golden Stack</h1>
+		</body>
+	</html>
+}
