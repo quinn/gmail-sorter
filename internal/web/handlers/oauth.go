@@ -64,5 +64,5 @@ func (h *Handler) OauthCallbackHandler(c echo.Context) error {
 	if err := json.NewEncoder(f).Encode(tok); err != nil {
 		return fmt.Errorf("could not encode token: %w", err)
 	}
-	return c.String(http.StatusOK, "OAuth Success! You may close this window.")
+	return c.Redirect(http.StatusFound, "/emails")
 }
