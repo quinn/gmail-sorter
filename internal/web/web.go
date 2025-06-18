@@ -32,7 +32,7 @@ func NewServer(spec *core.Spec) *echo.Echo {
 	h := handlers.NewHandler(spec)
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		slog.Error("error", err)
+		slog.Error("error", "err", err)
 		c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
