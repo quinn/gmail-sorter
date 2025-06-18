@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"github.com/quinn/gmail-sorter/internal/web"
+	"github.com/quinn/gmail-sorter/pkg/gmailapi"
+	"github.com/quinn/gmail-sorter/pkg/db"
+	"github.com/quinn/gmail-sorter/pkg/core"
 	"github.com/spf13/cobra"
 )
 
@@ -10,9 +13,19 @@ var serverCmd = &cobra.Command{
 	Short: "A brief description of your command",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		server := web.NewServer()
-
-		err := server.Start(":3000")
+		// Initialize Gmail API and DB as in cmd/apply.go
+		api, err := gmailapi.Start()
+		if err != nil {
+			panic(err)
+		}
+		db := db.NewDB()
+		defer db.Close()
+		spec, err := core.NewSpec(api, db)
+		if err != nil {
+			panic(err)
+		}
+		server := web.NewServer(spec)
+		err = server.Start(":3000")
 		if err != nil {
 			panic(err)
 		}

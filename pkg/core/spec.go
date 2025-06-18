@@ -25,6 +25,11 @@ type Spec struct {
 	db          *db.DB
 }
 
+// GmailService returns the Gmail API client.
+func (s *Spec) GmailService() *gmail.Service {
+	return s.api
+}
+
 const timeFormat = "Mon Jan 2 15:04:05 -0700 MST 2006"
 
 // NewSpec loads the spec.yaml

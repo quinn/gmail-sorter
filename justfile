@@ -3,3 +3,6 @@ run *args:
 
 build:
   go build
+
+dev:
+  go tool goreman start

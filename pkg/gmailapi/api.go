@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -85,7 +84,7 @@ func saveToken(path string, token *oauth2.Token) {
 
 // Start is bullshit
 func Start() (service *gmail.Service, err error) {
-	b, err := ioutil.ReadFile("credentials.json")
+	b, err := os.ReadFile("credentials.json")
 
 	if err != nil {
 		return nil, errors.Errorf("Unable to read client secret file: %v", err)
