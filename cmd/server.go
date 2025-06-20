@@ -28,7 +28,11 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		server := web.NewServer(spec)
+		server, err := web.NewServer(spec)
+		if err != nil {
+			return err
+		}
+
 		err = server.Start(":" + os.Getenv("PORT"))
 		if err != nil {
 			return err

@@ -16,7 +16,7 @@ import (
 //go:embed public
 var assetsFS embed.FS
 
-func NewServer(spec *core.Spec) *echo.Echo {
+func NewServer(spec *core.Spec) (*echo.Echo, error) {
 	e := echo.New()
 	e.Use(middleware.Logger())
 
@@ -29,7 +29,10 @@ func NewServer(spec *core.Spec) *echo.Echo {
 		os.Getenv("USE_EMBEDDED_ASSETS") == "true",
 	)
 
-	h := handlers.NewHandler(spec)
+	h, err := handlers.NewHandler(spec)
+	if err != nil {
+		return nil, err
+	}
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		slog.Error("error", "err", err)
@@ -41,6 +44,7 @@ func NewServer(spec *core.Spec) *echo.Echo {
 	e.GET("/emails/:id", h.EmailHandler)
 	e.GET("/oauth/start", h.OauthStartHandler)
 	e.GET("/oauth/callback", h.OauthCallbackHandler)
+	e.GET("/", h.IndexHandler)
 
-	return e
+	return e, nil
 }

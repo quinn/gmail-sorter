@@ -5,35 +5,29 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-templ Email(email models.EmailResponse) {
+templ Email(email models.EmailResponse, actions []models.Action) {
 	@ui.Layout() {
-		<div class="flex justify-center items-center">
-			<div class="card">
-				<h1>Email Detail</h1>
-				<div>
-					<strong>From:</strong> { email.From }
-					<br/>
-					<strong>To:</strong> { email.To }
-					<br/>
-					<strong>Subject:</strong> { email.Subject }
-					<br/>
-					<strong>Date:</strong> { email.Date }
-					<br/>
-				</div>
-				<hr/>
-				<div>
-					{ email.Snippet }
-				</div>
-				<div class="mt-2">
-					<a href="/emails">Back to Inbox</a>
-					if email.PrevID != "" {
-						<a href={ "/emails/" + email.PrevID } class="ml-2">&larr; Back</a>
-					}
-					if email.NextID != "" {
-						<a href={ "/emails/" + email.NextID } class="ml-2">Forward &rarr;</a>
-					}
-				</div>
+		<div class="card">
+			<h1>Email Detail</h1>
+			<div>
+				<strong>From:</strong> { email.From }
+				<br/>
+				<strong>To:</strong> { email.To }
+				<br/>
+				<strong>Subject:</strong> { email.Subject }
+				<br/>
+				<strong>Date:</strong> { email.Date }
+				<br/>
 			</div>
+			<hr/>
+			<div>
+				{ email.Snippet }
+			</div>
+		</div>
+		<div>
+			for _, action := range actions {
+				<button>{ action.Label }</button>
+			}
 		</div>
 	}
 }
