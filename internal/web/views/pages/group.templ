@@ -1,0 +1,15 @@
+package pages
+
+import (
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+)
+
+templ GroupEmail(emailId string) {
+	@ui.Layout() {
+		<div class="card">
+			<h1>Group Email</h1>
+			<p>Email ID: { emailId }</p>
+			<!-- TODO: Add group form or actions here -->
+		</div>
+	}
+}
