@@ -5,4 +5,4 @@ build:
   go build
 
 dev:
-  go tool goreman start
+  go tool goreman -b 5001 start

@@ -38,6 +38,7 @@ func NewServer(spec *core.Spec) *echo.Echo {
 
 	e.GET("/healthz", h.HealthCheck)
 	e.GET("/emails", h.EmailsHandler)
+	e.GET("/emails/:id", h.EmailHandler)
 	e.GET("/oauth/start", h.OauthStartHandler)
 	e.GET("/oauth/callback", h.OauthCallbackHandler)
 

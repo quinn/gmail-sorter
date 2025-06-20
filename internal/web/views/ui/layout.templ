@@ -1,14 +1,17 @@
 package ui
 
-import "go.quinn.io/ccf/assets"
+import (
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
+	"go.quinn.io/ccf/assets"
+)
 
 templ Layout() {
 	<html>
 		<head>
-			<title>Golden Stack</title>
+			<title>{ middleware.GetTitle(ctx) }</title>
 			<link rel="stylesheet" href={ assets.Path("css/styles.css") }/>
 		</head>
-		<body>
+		<body class="body">
 			{ children... }
 		</body>
 	</html>

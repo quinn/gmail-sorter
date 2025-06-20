@@ -8,4 +8,6 @@ type EmailResponse struct {
 	Subject  string
 	Date     string
 	Snippet  string
+	PrevID   string
+	NextID   string
 }

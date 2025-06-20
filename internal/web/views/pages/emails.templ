@@ -23,7 +23,7 @@ templ Emails(emails []models.EmailResponse) {
                     <tr>
                         <td>{email.From}</td>
                         <td>{email.To}</td>
-                        <td>{email.Subject}</td>
+                        <td><a href={"/emails/" + email.ID}>{email.Subject}</a></td>
                         <td>{email.Date}</td>
                         <td>{email.Snippet}</td>
                     </tr>

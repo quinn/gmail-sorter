@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/option"
 )
 
 // Spec spec
@@ -101,7 +102,7 @@ func Start() (service *gmail.Service, err error) {
 	}
 
 	client := getClient(config)
-	service, err = gmail.New(client)
+	service, err = gmail.NewService(context.Background(), option.WithHTTPClient(client))
 
 	if err != nil {
 		return nil, errors.Errorf("Unable to retrieve Gmail client: %v", err)

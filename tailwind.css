@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@layer components {
+	.card {
+		@apply bg-white rounded-lg shadow-md p-4;
+		@apply dark:bg-gray-800 dark:text-gray-100;
+	}
+
+	.body {
+		@apply bg-gray-50 text-gray-900;
+		@apply dark:bg-gray-900 dark:text-gray-100;
+		@apply grid overflow-hidden h-screen w-screen;
+	}
+}
