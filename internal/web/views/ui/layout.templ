@@ -2,17 +2,32 @@ package ui
 
 import (
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
+	"github.com/quinn/gmail-sorter/internal/web/models"
 	"go.quinn.io/ccf/assets"
 )
 
-templ Layout() {
+templ Layout(actions []models.Action) {
+	<!DOCTYPE html>
 	<html>
 		<head>
 			<title>{ middleware.GetTitle(ctx) }</title>
 			<link rel="stylesheet" href={ assets.Path("css/styles.css") }/>
+			<script src={ assets.Path("js/htmx.js") } defer></script>
 		</head>
 		<body class="body">
 			{ children... }
+			<div>
+				for _, action := range actions {
+					<form
+						action={ action.Path }
+						method={ action.Method }
+						hx-trigger={ "click, keyup[key=='" + action.Shortcut + "'] from:body" }
+						hx-boost="true"
+					>
+						<button>{ action.Label } [{ action.Shortcut }]</button>
+					</form>
+				}
+			</div>
 		</body>
 	</html>
 }

@@ -9,6 +9,13 @@ import (
 // SkipEmailHandler handles POST /emails/:id/skip
 func (h *Handler) SkipEmailHandler(c echo.Context) error {
 	id := c.Param("id")
-	// TODO: Implement business logic
-	return c.String(http.StatusOK, "Skip action for email "+id)
+	// Remove message with matching id from h.messages
+	newMessages := h.messages[:0]
+	for _, m := range h.messages {
+		if m.Id != id {
+			newMessages = append(newMessages, m)
+		}
+	}
+	h.messages = newMessages
+	return c.Redirect(http.StatusSeeOther, "/")
 }

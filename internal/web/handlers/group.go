@@ -8,5 +8,5 @@ import (
 // GroupEmailHandler handles GET /emails/:id/group
 func (h *Handler) GroupEmailHandler(c echo.Context) error {
 	id := c.Param("id")
-	return pages.GroupEmail(id).Render(c.Request().Context(), c.Response().Writer)
+	return pages.GroupEmail(id, nil).Render(c.Request().Context(), c.Response().Writer)
 }

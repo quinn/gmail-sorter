@@ -6,7 +6,7 @@ import (
 )
 
 templ Email(email models.EmailResponse, actions []models.Action) {
-	@ui.Layout() {
+	@ui.Layout(actions) {
 		<div class="card">
 			<h1>Email Detail</h1>
 			<div>
@@ -23,11 +23,6 @@ templ Email(email models.EmailResponse, actions []models.Action) {
 			<div>
 				{ email.Snippet }
 			</div>
-		</div>
-		<div>
-			for _, action := range actions {
-				<button>{ action.Label }</button>
-			}
 		</div>
 	}
 }

@@ -1,11 +1,12 @@
 package pages
 
 import (
+	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-templ GroupEmail(emailId string) {
-	@ui.Layout() {
+templ GroupEmail(emailId string, actions []models.Action) {
+	@ui.Layout(actions) {
 		<div class="card">
 			<h1>Group Email</h1>
 			<p>Email ID: { emailId }</p>

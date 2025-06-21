@@ -23,7 +23,12 @@ func (h *Handler) EmailHandler(c echo.Context) error {
 		return c.String(http.StatusNotFound, "Email not found")
 	}
 
-	email := models.FromGmailMessage(msg)
+	fullMsg, err := h.spec.GmailService().Users.Messages.Get("me", msg.Id).Format("full").Do()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to get email: "+err.Error())
+	}
+
+	email := models.FromGmailMessage(fullMsg)
 
 	actions := []models.Action{
 		{
