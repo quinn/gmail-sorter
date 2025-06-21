@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
@@ -9,25 +9,38 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-// EmailHandler renders a single email by ID
-func (h *Handler) EmailHandler(c echo.Context) error {
-	id := c.Param("id")
+func (h *Handler) getEmail(id string) (*gmail.Message, int, error) {
 	var msg *gmail.Message
-	for _, m := range h.messages {
+	var idx int
+	for i, m := range h.messages {
 		if m.Id == id {
 			msg = m
+			idx = i
 			break
 		}
 	}
+
 	if msg == nil {
-		return c.String(http.StatusNotFound, "Email not found")
+		return nil, 0, fmt.Errorf("email not found")
+	}
+
+	return msg, idx, nil
+}
+
+// EmailHandler renders a single email by ID
+func (h *Handler) EmailHandler(c echo.Context) error {
+	id := c.Param("id")
+	msg, idx, err := h.getEmail(id)
+	if err != nil {
+		return err
 	}
 
 	fullMsg, err := h.spec.GmailService().Users.Messages.Get("me", msg.Id).Format("full").Do()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to get email: "+err.Error())
+		return fmt.Errorf("failed to get email: %w", err)
 	}
 
+	h.messages[idx] = fullMsg
 	email := models.FromGmailMessage(fullMsg)
 
 	actions := []models.Action{
@@ -50,5 +63,6 @@ func (h *Handler) EmailHandler(c echo.Context) error {
 			Shortcut: "d",
 		},
 	}
+
 	return pages.Email(email, actions).Render(c.Request().Context(), c.Response().Writer)
 }

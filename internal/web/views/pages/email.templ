@@ -7,22 +7,6 @@ import (
 
 templ Email(email models.EmailResponse, actions []models.Action) {
 	@ui.Layout(actions) {
-		<div class="card">
-			<h1>Email Detail</h1>
-			<div>
-				<strong>From:</strong> { email.From }
-				<br/>
-				<strong>To:</strong> { email.To }
-				<br/>
-				<strong>Subject:</strong> { email.Subject }
-				<br/>
-				<strong>Date:</strong> { email.Date }
-				<br/>
-			</div>
-			<hr/>
-			<div>
-				{ email.Snippet }
-			</div>
-		</div>
+		@ui.Email(email)
 	}
 }

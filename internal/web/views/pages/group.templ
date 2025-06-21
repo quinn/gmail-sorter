@@ -5,12 +5,8 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-templ GroupEmail(emailId string, actions []models.Action) {
+templ GroupEmail(email models.EmailResponse, actions []models.Action) {
 	@ui.Layout(actions) {
-		<div class="card">
-			<h1>Group Email</h1>
-			<p>Email ID: { emailId }</p>
-			<!-- TODO: Add group form or actions here -->
-		</div>
+		@ui.Email(email)
 	}
 }
