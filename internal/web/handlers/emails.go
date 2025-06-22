@@ -8,8 +8,8 @@ import (
 
 // EmailResponse represents the JSON structure for an email.
 
-// EmailsHandler returns a JSON list of emails from all connected accounts.
-func (h *Handler) EmailsHandler(c echo.Context) error {
+// Emails returns a JSON list of emails from all connected accounts.
+func (h *Handler) Emails(c echo.Context) error {
 	// Fetch emails using Gmail API
 	var emails []models.EmailResponse
 	// api := h.spec.GmailService()

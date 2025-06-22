@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// IndexHandler renders the index page
-func (h *Handler) IndexHandler(c echo.Context) error {
+// Index renders the index page
+func (h *Handler) Index(c echo.Context) error {
 
 	m := h.messages[0]
 

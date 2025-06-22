@@ -39,15 +39,16 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 		c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	e.GET("/healthz", h.HealthCheck)
-	e.GET("/emails", h.EmailsHandler)
-	e.GET("/emails/:id", h.EmailHandler)
-	e.GET("/emails/:id/group", h.GroupEmailHandler)
-	e.POST("/emails/:id/skip", h.SkipEmailHandler)
-	e.POST("/emails/:id/delete", h.DeleteEmailHandler)
-	e.GET("/oauth/start", h.OauthStartHandler)
-	e.GET("/oauth/callback", h.OauthCallbackHandler)
-	e.GET("/", h.IndexHandler)
+	e.GET("/healthz", h.Health)
+	e.GET("/emails", h.Emails)
+	e.GET("/emails/:id", h.Email)
+	e.GET("/emails/:id/group", h.GroupEmail)
+	e.GET("/emails/:id/group/by/:type", h.GroupByEmail)
+	e.POST("/emails/:id/skip", h.SkipEmail)
+	e.POST("/emails/:id/delete", h.DeleteEmail)
+	e.GET("/oauth/start", h.OauthStart)
+	e.GET("/oauth/callback", h.OauthCallback)
+	e.GET("/", h.Index)
 
 	return e, nil
 }

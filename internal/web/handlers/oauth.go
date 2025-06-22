@@ -32,8 +32,8 @@ func OauthConfig() (*oauth2.Config, error) {
 	return config, nil
 }
 
-// OauthStartHandler redirects user to Google's OAuth2 consent screen
-func (h *Handler) OauthStartHandler(c echo.Context) error {
+// OauthStart redirects user to Google's OAuth2 consent screen
+func (h *Handler) OauthStart(c echo.Context) error {
 	config, err := OauthConfig()
 	if err != nil {
 		return fmt.Errorf("failed to load OAuth config: %w", err)
@@ -42,8 +42,8 @@ func (h *Handler) OauthStartHandler(c echo.Context) error {
 	return c.Redirect(http.StatusFound, url)
 }
 
-// OauthCallbackHandler handles the OAuth2 callback and saves token.json
-func (h *Handler) OauthCallbackHandler(c echo.Context) error {
+// OauthCallback handles the OAuth2 callback and saves token.json
+func (h *Handler) OauthCallback(c echo.Context) error {
 	config, err := OauthConfig()
 	if err != nil {
 		return fmt.Errorf("failed to load OAuth config: %w", err)

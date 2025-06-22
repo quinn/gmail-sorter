@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// SkipEmailHandler handles POST /emails/:id/skip
-func (h *Handler) SkipEmailHandler(c echo.Context) error {
+// SkipEmail handles POST /emails/:id/skip
+func (h *Handler) SkipEmail(c echo.Context) error {
 	id := c.Param("id")
 	// Remove message with matching id from h.messages
 	newMessages := h.messages[:0]

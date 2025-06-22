@@ -27,8 +27,8 @@ func (h *Handler) getEmail(id string) (*gmail.Message, int, error) {
 	return msg, idx, nil
 }
 
-// EmailHandler renders a single email by ID
-func (h *Handler) EmailHandler(c echo.Context) error {
+// Email renders a single email by ID
+func (h *Handler) Email(c echo.Context) error {
 	id := c.Param("id")
 	msg, idx, err := h.getEmail(id)
 	if err != nil {

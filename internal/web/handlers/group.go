@@ -6,8 +6,8 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
-// GroupEmailHandler handles GET /emails/:id/group
-func (h *Handler) GroupEmailHandler(c echo.Context) error {
+// GroupEmail handles GET /emails/:id/group
+func (h *Handler) GroupEmail(c echo.Context) error {
 	id := c.Param("id")
 
 	msg, _, err := h.getEmail(id)
