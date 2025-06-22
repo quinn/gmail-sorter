@@ -74,8 +74,9 @@ for _, group := range groupKeys {
         ...
     }
 }
-
 ```
-You switched from the templ curly-brace loop syntax ({{ ... }}) to direct Go-style loop syntax (for _, ... { ... }). This matches the templ rules for embedding Go code directly in the template body, which is required for proper code generation.
+
+You switched from the nontempl curly-brace loop syntax ({{ ... }}) to direct Go-style loop syntax (for _, ... { ... }). This matches the templ rules for embedding Go code directly in the template body, which is required for proper code generation.
 ---
-These rules are based on discoveries and debugging from implementing advanced grouping logic in Gmail Sorter templates. Follow them to avoid common templ compilation and runtime errors.
+
+These rules are based on discoveries and debugging from implementing advanced grouping logic in templ templates. Follow them to avoid common templ compilation and runtime errors.
