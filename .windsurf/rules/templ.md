@@ -23,8 +23,8 @@ This document summarizes key rules and discoveries for using the `templ` languag
 
 ## 4. Layouts and Nodes
 - `@ui.Layout(nil)` (or any layout) must wrap only HTML nodes and template markup, not Go code blocks.
-- Do wrap a `{{ ... }}` block around a layout directive.
-- Do wrap a `{{ ... }}` block around the for loop in {{ ... }}. The templ engine parses Go statements like for natively in the template body.
+- Do not wrap a `{{ ... }}` block around a layout directive or other keywords like if `for` and `if`.
+- Do not wrap a `{{ ... }}` block around the for loop in {{ ... }}. The templ engine parses Go statements like for natively in the template body.
 - The layout must contain at least one HTML node or valid template expression.
 
 ## 5. Duplication and Structure
@@ -55,6 +55,27 @@ This document summarizes key rules and discoveries for using the `templ` languag
     }
 }
 ```
+3. Template Loop Syntax
+Old (Incorrect):
+```bad-templ
+{{ for _, group := range groupKeys { }}
+    ...
+    {{ for _, email := range groupMap[group] { }}
+        ...
+    {{ } }}
+{{ } }}
+```
 
+New (Correct):
+```templ
+for _, group := range groupKeys {
+    ...
+    for _, email := range groupMap[group] {
+        ...
+    }
+}
+
+```
+You switched from the templ curly-brace loop syntax ({{ ... }}) to direct Go-style loop syntax (for _, ... { ... }). This matches the templ rules for embedding Go code directly in the template body, which is required for proper code generation.
 ---
 These rules are based on discoveries and debugging from implementing advanced grouping logic in Gmail Sorter templates. Follow them to avoid common templ compilation and runtime errors.

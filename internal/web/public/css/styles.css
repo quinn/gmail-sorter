@@ -166,6 +166,9 @@
   }
 }
 @layer utilities {
+  .block {
+    display: block;
+  }
   .resize {
     resize: both;
   }
