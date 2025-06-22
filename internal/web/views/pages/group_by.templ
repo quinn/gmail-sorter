@@ -1,13 +1,71 @@
 package pages
 
 import (
+	"sort"
+	"strings"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
 templ GroupBy(groupType string, emails []models.EmailResponse) {
+	{{
+		groupMap := map[string][]models.EmailResponse{}
+		groupKeys := []string{}
+		for _, email := range emails {
+			var key string
+			switch groupType {
+				case "domain":
+					from := email.From
+					at := strings.LastIndex(from, "@")
+					if at != -1 {
+						key = from[at+1:]
+					} else {
+						key = "Unknown Domain"
+					}
+				case "from":
+					key = email.From
+				case "to":
+					key = email.To
+				default:
+					key = "Unknown"
+			}
+			if _, exists := groupMap[key]; !exists {
+				groupKeys = append(groupKeys, key)
+			}
+			groupMap[key] = append(groupMap[key], email)
+		}
+		sort.Strings(groupKeys)
+	}}
 	@ui.Layout(nil) {
 		<h1>Grouped by { groupType }</h1>
+		{{ for _, group := range groupKeys { }}
+			<h2>{ group }</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>From</th>
+						<th>To</th>
+						<th>Subject</th>
+						<th>Date</th>
+						<th>Snippet</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{ for _, email := range groupMap[group] { }}
+					<tr>
+						<td>{ email.From }</td>
+						<td>{ email.To }</td>
+						<td><a href={ "/emails/" + email.ID }>{ email.Subject }</a></td>
+						<td>{ email.Date }</td>
+						<td>{ email.Snippet }</td>
+					</tr>
+					{{ } }}
+				</tbody>
+			</table>
+		{{ } }}
+	}
+	{{ for _, group := range groupKeys { }}
+		<h2>{ group }</h2>
 		<table>
 			<thead>
 				<tr>
@@ -19,16 +77,18 @@ templ GroupBy(groupType string, emails []models.EmailResponse) {
 				</tr>
 			</thead>
 			<tbody>
-				for _, email := range emails {
-					<tr>
-						<td>{ email.From }</td>
-						<td>{ email.To }</td>
-						<td><a href={ "/emails/" + email.ID }>{ email.Subject }</a></td>
-						<td>{ email.Date }</td>
-						<td>{ email.Snippet }</td>
-					</tr>
-				}
+				{{ for _, email := range groupMap[group] { }}
+				<tr>
+					<td>{ email.From }</td>
+					<td>{ email.To }</td>
+					<td><a href={ "/emails/" + email.ID }>{ email.Subject }</a></td>
+					<td>{ email.Date }</td>
+					<td>{ email.Snippet }</td>
+				</tr>
+				{{ } }}
 			</tbody>
 		</table>
-	}
+	{{ } }}
+}
+
 }
