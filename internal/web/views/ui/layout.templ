@@ -28,6 +28,11 @@ templ Layout(actions []models.Action) {
 						hx-trigger={ "click, keyup[key=='" + action.Shortcut + "'] from:body" }
 						hx-boost="true"
 					>
+						if action.Fields != nil {
+							for name, value := range action.Fields {
+								<input type="hidden" name={ name } value={ value }/>
+							}
+						}
 						<button>{ action.Label } [{ action.Shortcut }]</button>
 					</form>
 				}
