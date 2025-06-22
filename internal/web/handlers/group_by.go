@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log/slog"
+
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
@@ -26,6 +28,7 @@ func (h *Handler) GroupByEmail(c echo.Context) error {
 
 	// Fetch emails matching the query using Gmail API
 	api := h.spec.GmailService()
+	slog.Info("Fetching emails matching query: ", "query", query)
 	res, err := api.Users.Messages.List("me").Q(query).MaxResults(50).Do()
 	if err != nil {
 		return echo.NewHTTPError(500, "Failed to fetch emails: "+err.Error())
@@ -40,5 +43,15 @@ func (h *Handler) GroupByEmail(c echo.Context) error {
 		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
 	}
 
-	return pages.GroupBy(groupType, groupedEmails).Render(c.Request().Context(), c.Response().Writer)
+	actions := []models.Action{
+		{
+			Method:   "POST",
+			Path:     "/emails/group-by/" + groupType + "/delete",
+			Label:    "Delete",
+			Shortcut: "d",
+			Fields:   map[string]string{"val": val},
+			Confirm:  true,
+		},
+	}
+	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)
 }

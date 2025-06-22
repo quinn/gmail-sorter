@@ -19,7 +19,9 @@ templ Layout(actions []models.Action) {
 			<div id="htmx-loading-indicator" class="fixed inset-0 z-50 flex items-center justify-center bg-white/70 dark:bg-black/70 hidden" aria-hidden="true">
 				<div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" role="status" aria-label="Loading"></div>
 			</div>
-			{ children... }
+			<div class="overflow-y-auto">
+				{ children... }
+			</div>
 			<div>
 				for _, action := range actions {
 					<form

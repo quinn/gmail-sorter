@@ -6,4 +6,5 @@ type Action struct {
 	Label    string            `json:"label"`
 	Shortcut string            `json:"shortcut"`
 	Fields   map[string]string `json:"fields,omitempty"`
+	Confirm  bool              `json:"confirm,omitempty"`
 }

@@ -203,6 +203,9 @@
   .justify-center {
     justify-content: center;
   }
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
   .rounded-full {
     border-radius: calc(infinity * 1px);
   }
@@ -268,6 +271,7 @@
     @media (prefers-color-scheme: dark) {
       color: var(--color-gray-100);
     }
+    grid-column: 1fr min-content;
     display: grid;
     height: 100vh;
     width: 100vw;
