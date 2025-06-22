@@ -93,20 +93,20 @@ func GroupBy(groupType string, emails []models.EmailResponse) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for _, group := range groupKeys {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h2>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h2>the group is ????")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(group)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/group_by.templ`, Line: 42, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/group_by.templ`, Line: 42, Col: 31}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h2><table><thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead> <tbody>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "????</h2><table><thead><tr><th>From</th><th>To</th><th>Subject</th><th>Date</th><th>Snippet</th></tr></thead> <tbody>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

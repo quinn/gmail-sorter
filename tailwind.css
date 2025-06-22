@@ -5,6 +5,8 @@
   --default-font-family: var(--font-mono);
 }
 
+@source inline("htmx-request");
+
 @layer components {
   .card {
     @apply bg-white rounded-lg shadow-md p-4;
@@ -14,5 +16,9 @@
     @apply bg-gray-50 text-gray-900;
     @apply dark:bg-gray-900 dark:text-gray-100;
     @apply grid overflow-hidden h-screen w-screen;
+  }
+
+  .htmx-request {
+    display: flex !important;
   }
 }
