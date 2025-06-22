@@ -12,6 +12,7 @@ templ Layout(actions []models.Action) {
 		<head>
 			<title>{ middleware.GetTitle(ctx) }</title>
 			<link rel="stylesheet" href={ assets.Path("css/styles.css") }/>
+			<link rel="stylesheet" href={ assets.Path("fonts/fonts.css") }/>
 			<script src={ assets.Path("js/htmx.js") } defer></script>
 		</head>
 		<body class="body">

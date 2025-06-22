@@ -43,7 +43,7 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 	e.GET("/emails", h.Emails)
 	e.GET("/emails/:id", h.Email)
 	e.GET("/emails/:id/group", h.GroupEmail)
-	e.GET("/emails/:id/group/by/:type", h.GroupByEmail)
+	e.GET("/emails/group-by/:type", h.GroupByEmail)
 	e.POST("/emails/:id/skip", h.SkipEmail)
 	e.POST("/emails/:id/delete", h.DeleteEmail)
 	e.GET("/oauth/start", h.OauthStart)

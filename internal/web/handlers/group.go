@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/url"
+
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
@@ -10,29 +12,27 @@ import (
 func (h *Handler) GroupEmail(c echo.Context) error {
 	id := c.Param("id")
 
-	msg, _, err := h.getEmail(id)
+	email, err := h.getEmail(id)
 	if err != nil {
 		return err
 	}
 
-	email := models.FromGmailMessage(msg)
-
 	actions := []models.Action{
 		{
 			Method:   "GET",
-			Path:     "/emails/" + id + "/group/by/domain",
+			Path:     "/emails/group-by/domain?val=" + url.QueryEscape(email.FromDomain),
 			Label:    "Domain",
 			Shortcut: "u",
 		},
 		{
 			Method:   "GET",
-			Path:     "/emails/" + id + "/group/by/from",
+			Path:     "/emails/group-by/from?val=" + url.QueryEscape(email.From),
 			Label:    "From",
 			Shortcut: "f",
 		},
 		{
 			Method:   "GET",
-			Path:     "/emails/" + id + "/group/by/to",
+			Path:     "/emails/group-by/to?val=" + url.QueryEscape(email.To),
 			Label:    "To",
 			Shortcut: "t",
 		},

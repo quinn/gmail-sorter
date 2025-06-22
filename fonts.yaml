@@ -1,0 +1,10 @@
+---
+dir: ./internal/web/public/fonts
+stylesheet: ./internal/web/public/fonts/fonts.css
+fonts:
+  - family: Courier Prime
+    variants:
+      - "700"
+      - "700italic"
+      - "regular"
+      - "italic"
