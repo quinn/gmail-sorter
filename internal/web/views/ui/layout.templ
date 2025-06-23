@@ -22,10 +22,11 @@ templ Layout(actions []models.Action) {
 			<div class="overflow-y-auto">
 				{ children... }
 			</div>
-			<div>
+			<div class="flex bg-gray-200 dark:bg-gray-700 gap-[1px] p-[1px]">
 				for _, action := range actions {
 					<form
-						action={ action.Path }
+						class="grow"
+						action={ templ.URL(action.Path) }
 						method={ action.Method }
 						hx-trigger={ "click, keyup[key=='" + action.Shortcut + "'] from:body" }
 						hx-boost="true"
@@ -35,7 +36,9 @@ templ Layout(actions []models.Action) {
 								<input type="hidden" name={ name } value={ value }/>
 							}
 						}
-						<button>{ action.Label } [{ action.Shortcut }]</button>
+						<button class="w-full p-3 bg-gray-100 dark:bg-gray-800">
+							{ action.Label } [{ action.Shortcut }]
+						</button>
 					</form>
 				}
 			</div>

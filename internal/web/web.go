@@ -48,6 +48,7 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 	e.POST("/emails/:id/delete", h.DeleteEmail)
 	e.GET("/oauth/start", h.OauthStart)
 	e.GET("/oauth/callback", h.OauthCallback)
+	e.GET("/confirm", h.Confirm)
 	e.GET("/", h.Index)
 
 	return e, nil
