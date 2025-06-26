@@ -12,11 +12,15 @@ func init() {
 }
 
 var EmailDeleteAction models.Action = models.Action{
+	ID:               "email-delete",
 	Method:           "POST",
 	Path:             "/emails/:id/delete",
-	Label:            "Delete",
-	Shortcut:         "d",
 	UnwrappedHandler: deleteEmail,
+	Label:            deleteLabel,
+}
+
+func deleteLabel(link models.ActionLink) string {
+	return "Delete"
 }
 
 // DeleteEmail handles POST /emails/:id/delete

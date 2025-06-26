@@ -14,11 +14,15 @@ func init() {
 }
 
 var ConfirmAction models.Action = models.Action{
+	ID:               "confirm",
 	Method:           "GET",
 	Path:             "/confirm",
-	Label:            "Confirm",
-	Shortcut:         "c",
 	UnwrappedHandler: confirm,
+	Label:            confirmLabel,
+}
+
+func confirmLabel(link models.ActionLink) string {
+	return "Confirm"
 }
 
 // Confirm handles the /confirm endpoint

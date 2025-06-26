@@ -12,11 +12,15 @@ func init() {
 }
 
 var EmailAction models.Action = models.Action{
+	ID:               "email",
 	Method:           "GET",
 	Path:             "/emails/:id",
-	Label:            "Email",
-	Shortcut:         "e",
 	UnwrappedHandler: email,
+	Label:            emailLabel,
+}
+
+func emailLabel(link models.ActionLink) string {
+	return "Email"
 }
 
 // Email renders a single email by ID
@@ -29,13 +33,13 @@ func email(c echo.Context) error {
 
 	actions := []models.ActionLink{
 		EmailGroupAction.Link(
-			models.WithPath("/emails/" + id + "/group"),
+			models.WithParams(id),
 		),
 		EmailSkipAction.Link(
-			models.WithPath("/emails/" + id + "/skip"),
+			models.WithParams(id),
 		),
 		EmailDeleteAction.Link(
-			models.WithPath("/emails/" + id + "/delete"),
+			models.WithParams(id),
 		),
 	}
 

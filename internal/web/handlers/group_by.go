@@ -14,11 +14,15 @@ func init() {
 }
 
 var GroupByEmailAction models.Action = models.Action{
+	ID:               "group-by",
 	Method:           "GET",
 	Path:             "/emails/group-by/:type",
-	Label:            "Group By",
-	Shortcut:         "g",
 	UnwrappedHandler: groupByEmail,
+	Label:            groupByLabel,
+}
+
+func groupByLabel(link models.ActionLink) string {
+	return "Group By " + link.Params[0]
 }
 
 // GroupByEmail handles GET /emails/:id/group/by/:type
@@ -58,7 +62,7 @@ func groupByEmail(c echo.Context) error {
 
 	actions := []models.ActionLink{
 		GroupByDeleteAction.Link(
-			models.WithPath("/emails/group-by/"+groupType+"/delete"),
+			models.WithParams(groupType),
 			models.WithFields(map[string]string{"val": val}),
 			models.WithConfirm(),
 		),

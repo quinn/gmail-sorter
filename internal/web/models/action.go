@@ -2,37 +2,40 @@ package models
 
 import (
 	"context"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
 type Action struct {
+	ID               string `json:"id"`
 	Method           string `json:"method"`
 	Path             string `json:"path"`
-	Label            string `json:"label"`
-	Shortcut         string `json:"shortcut"`
 	UnwrappedHandler func(c echo.Context) error
+	Label            func(link ActionLink) string
 }
 
-type ActionContextKey struct{}
+type LinkContextKey struct{}
 
 func (a Action) Handler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c.Set("action", a)
+		fields := map[string]string{}
+		if err := c.Bind(&fields); err != nil {
+			return err
+		}
+		link := a.Link(
+			WithParams(c.ParamValues()...),
+			WithFields(fields),
+		)
+		c.Set("link", link)
 		ctx := c.Request().Context()
-		withValue := context.WithValue(ctx, ActionContextKey{}, a)
+		withValue := context.WithValue(ctx, LinkContextKey{}, link)
 		c.SetRequest(c.Request().WithContext(withValue))
 		return a.UnwrappedHandler(c)
 	}
 }
 
-func GetAction(ctx context.Context) Action {
-	return ctx.Value(ActionContextKey{}).(Action)
-}
-
-func (a Action) ID() string {
-	return a.Method + " " + a.Path
+func GetLink(ctx context.Context) ActionLink {
+	return ctx.Value(LinkContextKey{}).(ActionLink)
 }
 
 type LinkOpt func(*ActionLink)
@@ -43,9 +46,9 @@ func WithConfirm() LinkOpt {
 	}
 }
 
-func WithPath(path string) LinkOpt {
+func WithParams(params ...string) LinkOpt {
 	return func(l *ActionLink) {
-		l.Path = path
+		l.Params = params
 	}
 }
 
@@ -57,7 +60,7 @@ func WithFields(fields map[string]string) LinkOpt {
 
 func (a Action) Link(opts ...LinkOpt) ActionLink {
 	link := ActionLink{
-		ActionID: a.ID(),
+		ActionID: a.ID,
 	}
 	for _, opt := range opts {
 		opt(&link)
@@ -67,22 +70,14 @@ func (a Action) Link(opts ...LinkOpt) ActionLink {
 
 type ActionLink struct {
 	ActionID string            `json:"action_id"`
-	Path     string            `json:"path"`
+	Params   []string          `json:"params,omitempty"`
 	Fields   map[string]string `json:"fields,omitempty"`
 	Confirm  bool              `json:"confirm,omitempty"`
 }
 
 func (l ActionLink) Action() Action {
-	parts := strings.Split(l.ActionID, " ")
-	if len(parts) != 2 {
-		panic("invalid action ID")
-	}
-
-	method := parts[0]
-	path := parts[1]
-
 	for _, action := range Actions {
-		if action.Method == method && action.Path == path {
+		if action.ID == l.ActionID {
 			return action
 		}
 	}

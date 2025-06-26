@@ -12,15 +12,14 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/handlers"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/pages"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 	"github.com/quinn/gmail-sorter/pkg/core"
 	"go.quinn.io/ccf/assets"
-	"google.golang.org/api/gmail/v1"
 )
 
 //go:embed public
 var assetsFS embed.FS
-
-var messages []*gmail.Message
 
 func NewServer(spec *core.Spec) (*echo.Echo, error) {
 	e := echo.New()
@@ -40,15 +39,35 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 		c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		statusCode := http.StatusInternalServerError
+		if httpErr, ok := err.(*echo.HTTPError); ok {
+			statusCode = httpErr.Code
+		}
+
+		var renderErr error
+		if c.Request().Header.Get("HX-Request") == "true" {
+			c.Response().Header().Set("HX-Retarget", "#flash")
+			c.Response().Header().Set("HX-Reswap", "innerHTML")
+			renderErr = ui.FlashMessage("error", err.Error()).Render(c.Request().Context(), c.Response().Writer)
+		} else {
+			c.Response().WriteHeader(statusCode)
+			renderErr = pages.ErrorPage(err.Error()).Render(c.Request().Context(), c.Response().Writer)
+		}
+
+		if renderErr != nil {
+			_ = c.JSON(statusCode, err)
+		}
+	}
+
 	// Fetch the list of messages for navigation
 	listRes, err := spec.GmailService().Users.Messages.List("me").MaxResults(50).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
-	messages = listRes.Messages
-
-	e.Use(middleware.Messages(&messages))
+	e.Use(middleware.Messages(&listRes.Messages))
 	e.Use(middleware.Gmail(spec.GmailService()))
+	e.Use(middleware.Echo)
 
 	e.GET("/healthz", handlers.Health)
 	e.GET("/oauth/start", handlers.OauthStart)
@@ -57,9 +76,9 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 	for _, action := range models.Actions {
 		switch action.Method {
 		case "GET":
-			e.GET(action.Path, action.Handler())
+			e.GET(action.Path, action.Handler()).Name = action.ID
 		case "POST":
-			e.POST(action.Path, action.Handler())
+			e.POST(action.Path, action.Handler()).Name = action.ID
 		default:
 			slog.Error("unknown action method", "method", action.Method)
 		}

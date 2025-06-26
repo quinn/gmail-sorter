@@ -13,11 +13,15 @@ func init() {
 }
 
 var EmailSkipAction models.Action = models.Action{
+	ID:               "email-skip",
 	Method:           "POST",
 	Path:             "/emails/:id/skip",
-	Label:            "Skip",
-	Shortcut:         "s",
 	UnwrappedHandler: skipEmail,
+	Label:            skipLabel,
+}
+
+func skipLabel(link models.ActionLink) string {
+	return "Skip"
 }
 
 // SkipEmail handles POST /emails/:id/skip

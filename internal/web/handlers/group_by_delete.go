@@ -12,11 +12,15 @@ func init() {
 }
 
 var GroupByDeleteAction models.Action = models.Action{
+	ID:               "group-by-delete",
 	Method:           "POST",
 	Path:             "/emails/group-by/delete",
-	Label:            "Delete",
-	Shortcut:         "d",
 	UnwrappedHandler: groupByDelete,
+	Label:            groupByDeleteLabel,
+}
+
+func groupByDeleteLabel(link models.ActionLink) string {
+	return "Delete"
 }
 
 func groupByDelete(c echo.Context) error {

@@ -12,11 +12,15 @@ func init() {
 }
 
 var EmailGroupAction models.Action = models.Action{
+	ID:               "email-group",
 	Method:           "GET",
 	Path:             "/emails/:id/group",
-	Label:            "Group",
-	Shortcut:         "g",
 	UnwrappedHandler: groupEmail,
+	Label:            groupLabel,
+}
+
+func groupLabel(link models.ActionLink) string {
+	return "Group"
 }
 
 // GroupEmail handles GET /emails/:id/group
@@ -30,15 +34,15 @@ func groupEmail(c echo.Context) error {
 
 	actions := []models.ActionLink{
 		GroupByEmailAction.Link(
-			models.WithPath("/emails/group-by/domain"),
+			models.WithParams("domain"),
 			models.WithFields(map[string]string{"val": email.FromDomain}),
 		),
 		GroupByEmailAction.Link(
-			models.WithPath("/emails/group-by/from"),
+			models.WithParams("from"),
 			models.WithFields(map[string]string{"val": email.From}),
 		),
 		GroupByEmailAction.Link(
-			models.WithPath("/emails/group-by/to"),
+			models.WithParams("to"),
 			models.WithFields(map[string]string{"val": email.To}),
 		),
 	}

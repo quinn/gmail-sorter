@@ -18,9 +18,11 @@ func SetTitle(c echo.Context, title string) {
 
 func GetTitle(ctx context.Context) string {
 	title, _ := ctx.Value(TitleContextKey{}).(string)
-	action := models.GetAction(ctx)
-	if action.Label != "" {
-		return action.Label + " | Gmail Sorter"
+	link := models.GetLink(ctx)
+	action := link.Action()
+	label := action.Label(link)
+	if label != "" {
+		return label + " | Gmail Sorter"
 	}
 	if title == "" {
 		return "Gmail Sorter"

@@ -13,11 +13,15 @@ func init() {
 }
 
 var IndexAction models.Action = models.Action{
+	ID:               "index",
 	Method:           "GET",
 	Path:             "/",
-	Label:            "Index",
-	Shortcut:         "i",
+	Label:            indexLabel,
 	UnwrappedHandler: index,
+}
+
+func indexLabel(link models.ActionLink) string {
+	return "Index"
 }
 
 // index renders the index page
