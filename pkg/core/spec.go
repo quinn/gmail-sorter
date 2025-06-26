@@ -183,7 +183,7 @@ func (s *Spec) findOrCreateLabel(labelName string) (*gmail.Label, error) {
 
 	d, err := yaml.Marshal(label)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal: %v", err)
+		return nil, fmt.Errorf("failed to marshal: %v", err)
 	}
 
 	err = s.db.Upsert("labels", label.Id, d)

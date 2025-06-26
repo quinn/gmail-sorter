@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/labstack/echo/v4"
@@ -11,44 +10,22 @@ import (
 )
 
 func init() {
-	models.Register(GroupByEmailAction)
+	models.Register(GroupBySaveAction)
 }
 
-var GroupByEmailAction models.Action = models.Action{
-	ID:               "group-by",
+var GroupBySaveAction models.Action = models.Action{
+	ID:               "group-by-save",
 	Method:           "GET",
-	Path:             "/emails/group-by/:type",
-	UnwrappedHandler: groupByEmail,
-	Label:            groupByLabel,
+	Path:             "/emails/group-by/:type/save",
+	UnwrappedHandler: groupBySave,
+	Label:            groupBySaveLabel,
 }
 
-func groupByLabel(link models.ActionLink) string {
+func groupBySaveLabel(link models.ActionLink) string {
 	return "Group By " + link.Params[0]
 }
 
-func groupQuery(c echo.Context) (string, error) {
-	groupType := c.Param("type") // domain, from, to
-	val := c.QueryParam("val")
-
-	// Build Gmail search query based on groupType
-	var query string
-	switch groupType {
-	case "domain":
-		query = "from:*@" + val
-	case "from":
-		query = "from:'" + val + "'"
-	case "to":
-		query = "to:'" + val + "'"
-	default:
-		return "", fmt.Errorf("invalid group type: %s", groupType)
-	}
-
-	query = "in:inbox " + query
-	return query, nil
-}
-
-// GroupByEmail handles GET /emails/:id/group/by/:type
-func groupByEmail(c echo.Context) error {
+func groupBySave(c echo.Context) error {
 	groupType := c.Param("type") // domain, from, to
 	val := c.QueryParam("val")
 	query, err := groupQuery(c)
@@ -78,10 +55,6 @@ func groupByEmail(c echo.Context) error {
 			models.WithParams(groupType),
 			models.WithFields(map[string]string{"val": val}),
 			models.WithConfirm(),
-		),
-		GroupBySaveAction.Link(
-			models.WithParams(groupType),
-			models.WithFields(map[string]string{"val": val}),
 		),
 	}
 	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)

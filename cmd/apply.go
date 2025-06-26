@@ -26,21 +26,22 @@ to quickly create a Cobra application.`,
 		slog.Info("apply called")
 
 		var err error
-		api, err := gmailapi.Start()
-
+		db, err := db.NewDB()
 		if err != nil {
 			return err
 		}
-
-		db := db.NewDB()
 		slog.Info("connected to database")
-
 		defer func() {
 			slog.Info("closing database")
 			_ = db.Close()
 		}()
 
-		spec, err := core.NewSpec(api, db)
+		api, err := gmailapi.Start(db)
+		if err != nil {
+			return err
+		}
+
+		spec, err := core.NewSpec(api.Service, db)
 
 		if err != nil {
 			return err

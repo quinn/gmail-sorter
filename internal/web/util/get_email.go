@@ -26,7 +26,7 @@ func GetEmail(c echo.Context, id string) (email models.EmailResponse, err error)
 	}
 
 	if msg.Payload == nil {
-		fullMsg, err := middleware.GetGmail(c).Users.Messages.Get("me", msg.Id).Format("full").Do()
+		fullMsg, err := middleware.GetGmail(c).FullMessage(msg.Id)
 		if err != nil {
 			return email, fmt.Errorf("failed to get email: %w", err)
 		}

@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"google.golang.org/api/gmail/v1"
 )
 
 func init() {
@@ -14,15 +17,31 @@ func init() {
 var GroupByDeleteAction models.Action = models.Action{
 	ID:               "group-by-delete",
 	Method:           "POST",
-	Path:             "/emails/group-by/delete",
+	Path:             "/emails/group-by/:type/delete",
 	UnwrappedHandler: groupByDelete,
 	Label:            groupByDeleteLabel,
 }
 
 func groupByDeleteLabel(link models.ActionLink) string {
-	return "Delete"
+	return "Delete By \"" + link.Params[0] + "\": " + link.Fields["val"]
 }
 
 func groupByDelete(c echo.Context) error {
-	return c.String(http.StatusOK, "Delete action for group by")
+	query, err := groupQuery(c)
+	if err != nil {
+		return err
+	}
+
+	batch := gmail.BatchModifyMessagesRequest{
+		RemoveLabelIds: []string{"INBOX"},
+		AddLabelIds:    []string{"TRASH"},
+	}
+
+	api := middleware.GetGmail(c)
+	count, err := api.ApplyBatch(query, &batch)
+	if err != nil {
+		return err
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/emails/group-by/"+c.Param("type")+"?val="+c.QueryParam("val")+"&success=true&count="+strconv.Itoa(count))
 }

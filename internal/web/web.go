@@ -2,7 +2,6 @@ package web
 
 import (
 	"embed"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,14 +13,14 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/core"
+	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"go.quinn.io/ccf/assets"
 )
 
 //go:embed public
 var assetsFS embed.FS
 
-func NewServer(spec *core.Spec) (*echo.Echo, error) {
+func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
 
@@ -60,13 +59,8 @@ func NewServer(spec *core.Spec) (*echo.Echo, error) {
 		}
 	}
 
-	// Fetch the list of messages for navigation
-	listRes, err := spec.GmailService().Users.Messages.List("me").MaxResults(50).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list messages: %w", err)
-	}
-	e.Use(middleware.Messages(&listRes.Messages))
-	e.Use(middleware.Gmail(spec.GmailService()))
+	e.Use(middleware.Messages(api.Messages))
+	e.Use(middleware.Gmail(api))
 	e.Use(middleware.Echo)
 
 	e.GET("/healthz", handlers.Health)

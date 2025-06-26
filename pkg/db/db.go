@@ -97,13 +97,13 @@ func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {
 }
 
 // NewDB inits it
-func NewDB() *DB {
+func NewDB() (*DB, error) {
 	path := "./bolt.db"
 	db, err := bolt.Open(path, 0666, nil)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &DB{db: db}
+	return &DB{db: db}, nil
 }

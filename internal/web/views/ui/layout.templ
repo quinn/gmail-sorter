@@ -24,14 +24,23 @@ templ Layout(links []models.ActionLink) {
 			<div id="htmx-loading-indicator" class="fixed inset-0 z-50 flex items-center justify-center bg-white/70 dark:bg-black/70 hidden" aria-hidden="true">
 				<div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" role="status" aria-label="Loading"></div>
 			</div>
+			<div id="modal" class="fixed inset-0 z-50 pointer-events-none"></div>
 			<div class="overflow-y-auto">
 				{ children... }
 			</div>
+			<button
+				class="fixed top-4 right-4 p-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full"
+				hx-trigger="click"
+				hx-target="#modal"
+				hx-get={ c.Echo().Reverse("menu") }
+			>
+				@Icon("gear", "size-12")
+			</button>
 			<div class="flex bg-gray-200 dark:bg-gray-700 gap-[1px] p-[1px]">
 				for i, link := range links {
 					{{
 						action := link.Action()
-						shortcut := shortcutKeys[i % len(shortcutKeys)]
+						shortcut := shortcutKeys[i%len(shortcutKeys)]
 						var params []interface{}
 						for _, param := range link.Params {
 							params = append(params, param)

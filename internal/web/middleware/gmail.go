@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"github.com/labstack/echo/v4"
-	"google.golang.org/api/gmail/v1"
+	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 )
 
-func Gmail(gmail *gmail.Service) echo.MiddlewareFunc {
+func Gmail(gmail *gmailapi.GmailAPI) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Set("gmail", gmail)
@@ -15,6 +15,6 @@ func Gmail(gmail *gmail.Service) echo.MiddlewareFunc {
 	}
 }
 
-func GetGmail(c echo.Context) *gmail.Service {
-	return c.Get("gmail").(*gmail.Service)
+func GetGmail(c echo.Context) *gmailapi.GmailAPI {
+	return c.Get("gmail").(*gmailapi.GmailAPI)
 }
