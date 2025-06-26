@@ -1,12 +1,13 @@
 package ui
 
 import (
+	"encoding/json"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"go.quinn.io/ccf/assets"
 )
 
-templ Layout(actions []models.Action) {
+templ Layout(links []models.ActionLink) {
 	<!DOCTYPE html>
 	<html>
 		<head>
@@ -23,17 +24,27 @@ templ Layout(actions []models.Action) {
 				{ children... }
 			</div>
 			<div class="flex bg-gray-200 dark:bg-gray-700 gap-[1px] p-[1px]">
-				for _, action := range actions {
+				for _, link := range links {
+					{{ action := link.Action() }}
 					<form
 						class="grow"
-						action={ templ.URL(action.Path) }
-						method={ action.Method }
+						if link.Confirm {
+							action="/confirm"
+							method="GET"
+						} else {
+							action={ templ.URL(action.Path) }
+							method={ action.Method }
+						}
 						hx-trigger={ "click, keyup[key=='" + action.Shortcut + "'] from:body" }
 						hx-boost="true"
 					>
-						if action.Fields != nil {
-							for name, value := range action.Fields {
-								<input type="hidden" name={ name } value={ value }/>
+						if link.Confirm {
+							<input type="hidden" name="link" value={ encodeJSON(link) }/>
+						} else {
+							if link.Fields != nil {
+								for name, value := range link.Fields {
+									<input type="hidden" name={ name } value={ value }/>
+								}
 							}
 						}
 						<button class="w-full p-3 bg-gray-100 dark:bg-gray-800">
@@ -44,4 +55,12 @@ templ Layout(actions []models.Action) {
 			</div>
 		</body>
 	</html>
+}
+
+func encodeJSON(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }

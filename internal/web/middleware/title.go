@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
 type TitleContextKey struct{}
@@ -17,6 +18,10 @@ func SetTitle(c echo.Context, title string) {
 
 func GetTitle(ctx context.Context) string {
 	title, _ := ctx.Value(TitleContextKey{}).(string)
+	action := models.GetAction(ctx)
+	if action.Label != "" {
+		return action.Label + " | Gmail Sorter"
+	}
 	if title == "" {
 		return "Gmail Sorter"
 	}

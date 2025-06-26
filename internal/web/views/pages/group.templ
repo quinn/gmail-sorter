@@ -5,7 +5,7 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-templ GroupEmail(email models.EmailResponse, actions []models.Action) {
+templ GroupEmail(email models.EmailResponse, actions []models.ActionLink) {
 	@ui.Layout(actions) {
 		@ui.Email(email)
 	}

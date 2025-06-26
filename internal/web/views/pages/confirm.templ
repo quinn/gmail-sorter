@@ -1,0 +1,15 @@
+package pages
+
+import (
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+)
+
+templ Confirm(actions []models.ActionLink) {
+	@ui.Layout(actions) {
+		<div class="flex flex-col items-center justify-center h-screen">
+			<h1>Confirm Action</h1>
+			<p class="mt-4">Are you sure you want to proceed with this action?</p>
+		</div>
+	}
+}

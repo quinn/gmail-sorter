@@ -5,7 +5,7 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-templ GroupBy(groupType string, val string, emails []models.EmailResponse, actions []models.Action) {
+templ GroupBy(groupType string, val string, emails []models.EmailResponse, actions []models.ActionLink) {
 	@ui.Layout(actions) {
 		<h1>Grouped by { groupType }</h1>
 		<p>Grouped by { val }</p>

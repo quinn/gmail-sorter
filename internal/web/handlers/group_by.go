@@ -4,12 +4,25 @@ import (
 	"log/slog"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
+func init() {
+	models.Register(GroupByEmailAction)
+}
+
+var GroupByEmailAction models.Action = models.Action{
+	Method:           "GET",
+	Path:             "/emails/group-by/:type",
+	Label:            "Group By",
+	Shortcut:         "g",
+	UnwrappedHandler: groupByEmail,
+}
+
 // GroupByEmail handles GET /emails/:id/group/by/:type
-func (h *Handler) GroupByEmail(c echo.Context) error {
+func groupByEmail(c echo.Context) error {
 	groupType := c.Param("type") // domain, from, to
 	val := c.QueryParam("val")
 
@@ -27,7 +40,7 @@ func (h *Handler) GroupByEmail(c echo.Context) error {
 	}
 
 	// Fetch emails matching the query using Gmail API
-	api := h.spec.GmailService()
+	api := middleware.GetGmail(c)
 	slog.Info("Fetching emails matching query: ", "query", query)
 	res, err := api.Users.Messages.List("me").Q(query).MaxResults(50).Do()
 	if err != nil {
@@ -43,15 +56,12 @@ func (h *Handler) GroupByEmail(c echo.Context) error {
 		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
 	}
 
-	actions := []models.Action{
-		{
-			Method:   "POST",
-			Path:     "/emails/group-by/" + groupType + "/delete",
-			Label:    "Delete",
-			Shortcut: "d",
-			Fields:   map[string]string{"val": val},
-			Confirm:  true,
-		},
+	actions := []models.ActionLink{
+		GroupByDeleteAction.Link(
+			models.WithPath("/emails/group-by/"+groupType+"/delete"),
+			models.WithFields(map[string]string{"val": val}),
+			models.WithConfirm(),
+		),
 	}
 	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)
 }

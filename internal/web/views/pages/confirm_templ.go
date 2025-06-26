@@ -13,7 +13,7 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-func GroupEmail(email models.EmailResponse, actions []models.ActionLink) templ.Component {
+func Confirm(actions []models.ActionLink) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -46,7 +46,7 @@ func GroupEmail(email models.EmailResponse, actions []models.ActionLink) templ.C
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = ui.Email(email).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-center h-screen\"><h1>Confirm Action</h1><p class=\"mt-4\">Are you sure you want to proceed with this action?</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

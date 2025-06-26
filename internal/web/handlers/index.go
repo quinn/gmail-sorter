@@ -4,13 +4,24 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
+	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
-// Index renders the index page
-func (h *Handler) Index(c echo.Context) error {
+func init() {
+	models.Register(IndexAction)
+}
 
-	m := h.messages[0]
+var IndexAction models.Action = models.Action{
+	Method:           "GET",
+	Path:             "/",
+	Label:            "Index",
+	Shortcut:         "i",
+	UnwrappedHandler: index,
+}
 
+// index renders the index page
+func index(c echo.Context) error {
+	m := (*middleware.GetMessages(c))[0]
 	return c.Redirect(http.StatusFound, "/emails/"+m.Id)
-	// return pages.Index().Render(c.Request().Context(), c.Response().Writer)
 }

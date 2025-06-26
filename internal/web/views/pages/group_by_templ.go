@@ -13,7 +13,7 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
 
-func GroupBy(groupType string, val string, emails []models.EmailResponse, actions []models.Action) templ.Component {
+func GroupBy(groupType string, val string, emails []models.EmailResponse, actions []models.ActionLink) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
