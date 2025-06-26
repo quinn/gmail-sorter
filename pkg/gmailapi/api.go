@@ -88,6 +88,36 @@ type GmailAPI struct {
 	Messages *[]*gmail.Message
 }
 
+// CreateFilterForGroupDelete creates a Gmail filter for the specified group type and value.
+func (g *GmailAPI) CreateFilterForGroupDelete(groupType, val string) error {
+	if val == "" {
+		return fmt.Errorf("missing val")
+	}
+
+	var criteria *gmail.FilterCriteria
+	switch groupType {
+	case "domain":
+		criteria = &gmail.FilterCriteria{From: "*@" + val}
+	case "from":
+		criteria = &gmail.FilterCriteria{From: val}
+	case "to":
+		criteria = &gmail.FilterCriteria{To: val}
+	default:
+		return fmt.Errorf("invalid group type: %s", groupType)
+	}
+
+	filterSpec := &gmail.Filter{
+		Criteria: criteria,
+		Action: &gmail.FilterAction{
+			RemoveLabelIds: []string{"INBOX"},
+			AddLabelIds:    []string{"TRASH"},
+		},
+	}
+
+	_, err := g.findOrCreateFilter(filterSpec)
+	return err
+}
+
 // Start is bullshit
 func Start(db *db.DB) (*GmailAPI, error) {
 	b, err := os.ReadFile("credentials.json")

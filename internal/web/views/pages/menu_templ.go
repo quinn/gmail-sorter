@@ -43,7 +43,7 @@ func Menu() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h2>Menu</h2><a href=\"/filters\">Filters</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h2>Menu</h2><hr><a href=\"/filters\">Filters</a><hr><a href=\"/\">Home</a><hr><a href=\"/oauth/start\">Reauthorize</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -30,6 +30,14 @@ func groupQuery(c echo.Context) (string, error) {
 	groupType := c.Param("type") // domain, from, to
 	val := c.QueryParam("val")
 
+	if val == "" {
+		val = c.FormValue("val")
+	}
+
+	if val == "" {
+		return "", fmt.Errorf("missing val")
+	}
+
 	// Build Gmail search query based on groupType
 	var query string
 	switch groupType {

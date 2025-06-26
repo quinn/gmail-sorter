@@ -16,6 +16,7 @@ var (
 	// Scopes for Gmail API
 	oauthScopes = []string{
 		"https://www.googleapis.com/auth/gmail.readonly",
+		"https://www.googleapis.com/auth/gmail.modify",
 	}
 )
 
@@ -64,5 +65,5 @@ func OauthCallback(c echo.Context) error {
 	if err := json.NewEncoder(f).Encode(tok); err != nil {
 		return fmt.Errorf("could not encode token: %w", err)
 	}
-	return c.Redirect(http.StatusFound, "/emails")
+	return c.Redirect(http.StatusFound, "/")
 }

@@ -21,7 +21,7 @@ var IndexAction models.Action = models.Action{
 }
 
 func indexLabel(link models.ActionLink) string {
-	return "Index"
+	return "Home"
 }
 
 // index renders the index page

@@ -1,0 +1,17 @@
+package pages
+
+import (
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+)
+
+templ GroupByDeleteSuccess(actions []models.ActionLink, groupType string, val string, count int) {
+	@ui.Layout(actions) {
+		<div class="center">
+			<div class="bg-gray-600 text-center p-4 border border-gray-400">
+				<h1>Deleted { count } emails grouped by { groupType }: { val }</h1>
+				<p>The selected emails have been moved to Trash.</p>
+			</div>
+		</div>
+	}
+}

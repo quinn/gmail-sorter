@@ -43,5 +43,5 @@ func groupByDelete(c echo.Context) error {
 		return err
 	}
 
-	return c.Redirect(http.StatusSeeOther, "/emails/group-by/"+c.Param("type")+"?val="+c.QueryParam("val")+"&success=true&count="+strconv.Itoa(count))
+	return c.Redirect(http.StatusSeeOther, "/emails/group-by/"+c.Param("type")+"/delete/success?val="+c.FormValue("val")+"&count="+strconv.Itoa(count))
 }
