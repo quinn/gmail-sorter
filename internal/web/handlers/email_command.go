@@ -40,6 +40,8 @@ func emailCommand(c echo.Context) error {
 		err = api.Archive(id)
 	case "open":
 		return htmx.Redirect(c, "https://mail.google.com/mail/u/0/#inbox/"+id)
+	case "todo":
+		return c.String(http.StatusNotImplemented, "TODO: Move email to Todoist (not yet implemented)")
 	default:
 		return fmt.Errorf("invalid command: %s", c.Param("command"))
 	}

@@ -47,6 +47,9 @@ func email(c echo.Context) error {
 		EmailCommandAction.Link(
 			models.WithParams(id, "open"),
 		),
+		EmailCommandAction.Link(
+			models.WithParams(id, "todo"),
+		),
 	}
 
 	return pages.Email(email, actions).Render(c.Request().Context(), c.Response().Writer)
