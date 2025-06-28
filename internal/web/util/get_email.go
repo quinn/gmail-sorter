@@ -34,6 +34,5 @@ func GetEmail(c echo.Context, id string) (email models.EmailResponse, err error)
 		(*messages)[idx] = fullMsg
 	}
 
-	email = models.FromGmailMessage(msg)
-	return email, nil
+	return models.FromGmailMessage(msg)
 }

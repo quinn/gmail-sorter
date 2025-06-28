@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"net/mail"
 	"strings"
 
 	"google.golang.org/api/gmail/v1"
@@ -9,16 +11,17 @@ import (
 type EmailResponse struct {
 	ID         string
 	ThreadID   string
-	From       string
+	From       []string
 	FromDomain string
-	To         string
+	To         []string
 	Subject    string
 	Date       string
 	Snippet    string
 }
 
-func FromGmailMessage(msg *gmail.Message) EmailResponse {
-	var from, to, subject, date string
+func FromGmailMessage(msg *gmail.Message) (EmailResponse, error) {
+	var from, to []string
+	var subject, date string
 
 	if msg.Payload == nil {
 		panic("FromGmailMessage expects a FullMessage (no payload)")
@@ -27,9 +30,23 @@ func FromGmailMessage(msg *gmail.Message) EmailResponse {
 	for _, h := range msg.Payload.Headers {
 		switch h.Name {
 		case "From":
-			from = h.Value
+			addr, err := mail.ParseAddressList(h.Value)
+			if err != nil {
+				return EmailResponse{}, fmt.Errorf("failed to parse from: %w", err)
+			}
+			from = make([]string, len(addr))
+			for i, a := range addr {
+				from[i] = a.Address
+			}
 		case "To":
-			to = h.Value
+			addr, err := mail.ParseAddressList(h.Value)
+			if err != nil {
+				return EmailResponse{}, fmt.Errorf("failed to parse to: %w", err)
+			}
+			to = make([]string, len(addr))
+			for i, a := range addr {
+				to[i] = a.Address
+			}
 		case "Subject":
 			subject = h.Value
 		case "Date":
@@ -41,10 +58,10 @@ func FromGmailMessage(msg *gmail.Message) EmailResponse {
 		ID:         msg.Id,
 		ThreadID:   msg.ThreadId,
 		From:       from,
-		FromDomain: from[strings.Index(from, "@")+1:],
+		FromDomain: from[0][strings.Index(from[0], "@")+1:],
 		To:         to,
 		Subject:    subject,
 		Date:       date,
 		Snippet:    msg.Snippet,
-	}
+	}, nil
 }

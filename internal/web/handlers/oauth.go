@@ -10,13 +10,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/gmail/v1"
 )
 
 var (
 	// Scopes for Gmail API
 	oauthScopes = []string{
-		"https://www.googleapis.com/auth/gmail.readonly",
-		"https://www.googleapis.com/auth/gmail.modify",
+		gmail.GmailReadonlyScope,
+		gmail.GmailModifyScope,
+		gmail.GmailSettingsBasicScope,
 	}
 )
 

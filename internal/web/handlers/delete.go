@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
@@ -26,6 +27,11 @@ func deleteLabel(link models.ActionLink) string {
 // DeleteEmail handles POST /emails/:id/delete
 func deleteEmail(c echo.Context) error {
 	id := c.Param("id")
-	// TODO: Implement business logic
-	return c.String(http.StatusOK, "Delete action for email "+id)
+	api := middleware.GetGmail(c)
+
+	if err := api.Delete(id); err != nil {
+		return err
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/")
 }

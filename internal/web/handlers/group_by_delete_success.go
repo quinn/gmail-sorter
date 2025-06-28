@@ -31,13 +31,11 @@ func groupByDeleteSuccess(c echo.Context) error {
 	countStr := c.QueryParam("count")
 	count, _ := strconv.Atoi(countStr)
 
-	saveFilterAction := GroupBySaveFilterAction.Link(
-		models.WithParams(groupType),
-		models.WithFields(map[string]string{"val": val}),
-	)
-
 	actions := []models.ActionLink{
-		saveFilterAction,
+		GroupBySaveFilterAction.Link(
+			models.WithParams(groupType),
+			models.WithFields(map[string]string{"val": val}),
+		),
 		IndexAction.Link(),
 	}
 

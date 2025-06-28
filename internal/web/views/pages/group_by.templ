@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"strings"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 )
@@ -22,9 +23,9 @@ templ GroupBy(groupType string, val string, emails []models.EmailResponse, actio
 			<tbody>
 				for _, email := range emails {
 					<tr>
-						<td>{ email.From }</td>
-						<td>{ email.To }</td>
-						<td><a href={ "/emails/" + email.ID }>{ email.Subject }</a></td>
+						<td>{ strings.Join(email.From, ", ") }</td>
+						<td>{ strings.Join(email.To, ", ") }</td>
+						<td><a href={ templ.URL("/emails/" + email.ID) }>{ email.Subject }</a></td>
 						<td>{ email.Date }</td>
 						<td>{ email.Snippet }</td>
 					</tr>

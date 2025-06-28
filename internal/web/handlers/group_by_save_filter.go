@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
@@ -37,6 +39,10 @@ func groupBySaveFilter(c echo.Context) error {
 		return fmt.Errorf("failed to create gmail filter: %w", err)
 	}
 
-	return c.Redirect(http.StatusSeeOther, "/")
+	linkJSON, err := json.Marshal(c.Get("link"))
+	if err != nil {
+		return fmt.Errorf("failed to marshal link: %w", err)
+	}
 
+	return c.Redirect(http.StatusSeeOther, "/success?link="+url.QueryEscape(string(linkJSON)))
 }

@@ -35,11 +35,17 @@ func email(c echo.Context) error {
 		EmailGroupAction.Link(
 			models.WithParams(id),
 		),
-		EmailSkipAction.Link(
+		EmailCommandAction.Link(
 			models.WithParams(id),
+			models.WithParams("skip"),
 		),
-		EmailDeleteAction.Link(
+		EmailCommandAction.Link(
 			models.WithParams(id),
+			models.WithParams("archive"),
+		),
+		EmailCommandAction.Link(
+			models.WithParams(id),
+			models.WithParams("delete"),
 		),
 	}
 

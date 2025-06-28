@@ -1,0 +1,25 @@
+package pages
+
+import (
+	"encoding/json"
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+)
+
+templ Success(actions []models.ActionLink, link models.ActionLink) {
+	@ui.Layout(actions) {
+		<div class="center">
+			<div class="bg-gray-600 text-center p-4 border border-gray-400">
+				<h1>Success!</h1>
+				<p class="mt-4">Action completed successfully.</p>
+				<p>{ link.Action().Label(link) }</p>
+				<div class="text-left border border-gray-400 p-4 bg-gray-800 mt-4">
+					{{
+						jsonstr, _ := json.MarshalIndent(link, "", "  ")
+					}}
+					<pre>{ string(jsonstr) }</pre>
+				</div>
+			</div>
+		</div>
+	}
+}

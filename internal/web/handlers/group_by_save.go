@@ -1,61 +1,52 @@
 package handlers
 
-import (
-	"log/slog"
+// func init() {
+// 	models.Register(GroupBySaveAction)
+// }
 
-	"github.com/labstack/echo/v4"
-	"github.com/quinn/gmail-sorter/internal/web/middleware"
-	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
-)
+// var GroupBySaveAction models.Action = models.Action{
+// 	ID:               "group-by-save",
+// 	Method:           "GET",
+// 	Path:             "/emails/group-by/:type/save",
+// 	UnwrappedHandler: groupBySave,
+// 	Label:            groupBySaveLabel,
+// }
 
-func init() {
-	models.Register(GroupBySaveAction)
-}
+// func groupBySaveLabel(link models.ActionLink) string {
+// 	return "Group By " + link.Params[0]
+// }
 
-var GroupBySaveAction models.Action = models.Action{
-	ID:               "group-by-save",
-	Method:           "GET",
-	Path:             "/emails/group-by/:type/save",
-	UnwrappedHandler: groupBySave,
-	Label:            groupBySaveLabel,
-}
+// func groupBySave(c echo.Context) error {
+// 	groupType := c.Param("type") // domain, from, to
+// 	val := c.QueryParam("val")
+// 	query, err := groupQuery(c)
+// 	if err != nil {
+// 		return err
+// 	}
 
-func groupBySaveLabel(link models.ActionLink) string {
-	return "Group By " + link.Params[0]
-}
+// 	// Fetch emails matching the query using Gmail API
+// 	api := middleware.GetGmail(c)
+// 	slog.Info("Fetching emails matching query: ", "query", query)
+// 	res, err := api.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
+// 	if err != nil {
+// 		return echo.NewHTTPError(500, "Failed to fetch emails: "+err.Error())
+// 	}
 
-func groupBySave(c echo.Context) error {
-	groupType := c.Param("type") // domain, from, to
-	val := c.QueryParam("val")
-	query, err := groupQuery(c)
-	if err != nil {
-		return err
-	}
+// 	var groupedEmails []models.EmailResponse
+// 	for _, m := range res.Messages {
+// 		fullMsg, err := api.FullMessage(m.Id)
+// 		if err != nil {
+// 			continue // skip bad messages
+// 		}
+// 		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
+// 	}
 
-	// Fetch emails matching the query using Gmail API
-	api := middleware.GetGmail(c)
-	slog.Info("Fetching emails matching query: ", "query", query)
-	res, err := api.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
-	if err != nil {
-		return echo.NewHTTPError(500, "Failed to fetch emails: "+err.Error())
-	}
-
-	var groupedEmails []models.EmailResponse
-	for _, m := range res.Messages {
-		fullMsg, err := api.FullMessage(m.Id)
-		if err != nil {
-			continue // skip bad messages
-		}
-		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
-	}
-
-	actions := []models.ActionLink{
-		GroupByDeleteAction.Link(
-			models.WithParams(groupType),
-			models.WithFields(map[string]string{"val": val}),
-			models.WithConfirm(),
-		),
-	}
-	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)
-}
+// 	actions := []models.ActionLink{
+// 		GroupByDeleteAction.Link(
+// 			models.WithParams(groupType),
+// 			models.WithFields(map[string]string{"val": val}),
+// 			models.WithConfirm(),
+// 		),
+// 	}
+// 	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)
+// }

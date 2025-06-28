@@ -37,14 +37,20 @@ func groupEmail(c echo.Context) error {
 			models.WithParams("domain"),
 			models.WithFields(map[string]string{"val": email.FromDomain}),
 		),
-		GroupByEmailAction.Link(
-			models.WithParams("from"),
-			models.WithFields(map[string]string{"val": email.From}),
-		),
-		GroupByEmailAction.Link(
-			models.WithParams("to"),
-			models.WithFields(map[string]string{"val": email.To}),
-		),
+	}
+	for _, from := range email.From {
+		actions = append(actions,
+			GroupByEmailAction.Link(
+				models.WithParams("from"),
+				models.WithFields(map[string]string{"val": from}),
+			))
+	}
+	for _, to := range email.To {
+		actions = append(actions,
+			GroupByEmailAction.Link(
+				models.WithParams("to"),
+				models.WithFields(map[string]string{"val": to}),
+			))
 	}
 
 	return pages.GroupEmail(email, actions).Render(c.Request().Context(), c.Response().Writer)

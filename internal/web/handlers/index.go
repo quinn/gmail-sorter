@@ -26,6 +26,14 @@ func indexLabel(link models.ActionLink) string {
 
 // index renders the index page
 func index(c echo.Context) error {
-	m := (*middleware.GetMessages(c))[0]
+	api := middleware.GetGmail(c)
+
+	if len(*api.Messages) == 0 {
+		if err := api.RefreshMessages(); err != nil {
+			return err
+		}
+	}
+
+	m := (*api.Messages)[0]
 	return c.Redirect(http.StatusFound, "/emails/"+m.Id)
 }

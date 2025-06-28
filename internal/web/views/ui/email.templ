@@ -1,14 +1,17 @@
 package ui
 
-import "github.com/quinn/gmail-sorter/internal/web/models"
+import (
+	"strings"
+	"github.com/quinn/gmail-sorter/internal/web/models"
+)
 
 templ Email(email models.EmailResponse) {
 	<div class="card">
 		<h1>Email Detail</h1>
 		<div>
-			<strong>From:</strong> { email.From }
+			<strong>From:</strong> { strings.Join(email.From, ", ") }
 			<br/>
-			<strong>To:</strong> { email.To }
+			<strong>To:</strong> { strings.Join(email.To, ", ") }
 			<br/>
 			<strong>Subject:</strong> { email.Subject }
 			<br/>

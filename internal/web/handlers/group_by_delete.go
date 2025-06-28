@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -43,5 +44,9 @@ func groupByDelete(c echo.Context) error {
 		return err
 	}
 
-	return c.Redirect(http.StatusSeeOther, "/emails/group-by/"+c.Param("type")+"/delete/success?val="+c.FormValue("val")+"&count="+strconv.Itoa(count))
+	u := "/emails/group-by/" + c.Param("type") + "/delete/success"
+	u += "?val=" + url.QueryEscape(c.FormValue("val"))
+	u += "&count=" + strconv.Itoa(count)
+
+	return c.Redirect(http.StatusSeeOther, u)
 }

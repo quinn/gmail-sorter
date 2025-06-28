@@ -78,7 +78,11 @@ func groupByEmail(c echo.Context) error {
 		if err != nil {
 			continue // skip bad messages
 		}
-		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
+		email, err := models.FromGmailMessage(fullMsg)
+		if err != nil {
+			return err
+		}
+		groupedEmails = append(groupedEmails, email)
 	}
 
 	actions := []models.ActionLink{
@@ -86,10 +90,6 @@ func groupByEmail(c echo.Context) error {
 			models.WithParams(groupType),
 			models.WithFields(map[string]string{"val": val}),
 			models.WithConfirm(),
-		),
-		GroupBySaveAction.Link(
-			models.WithParams(groupType),
-			models.WithFields(map[string]string{"val": val}),
 		),
 	}
 	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)

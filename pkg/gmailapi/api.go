@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/quinn/gmail-sorter/pkg/db"
@@ -16,7 +15,6 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
-	"gopkg.in/yaml.v2"
 )
 
 var tokFile = "token.json"
@@ -88,6 +86,61 @@ type GmailAPI struct {
 	Messages *[]*gmail.Message
 }
 
+func (g *GmailAPI) Archive(id string) error {
+	moveToArchive := &gmail.ModifyMessageRequest{
+		RemoveLabelIds: []string{"INBOX"},
+		AddLabelIds:    []string{"ARCHIVE"},
+	}
+
+	if err := g.Modify(id, moveToArchive); err != nil {
+		return err
+	}
+
+	g.Skip(id)
+
+	return nil
+}
+
+// Start is bullshit
+func Start(db *db.DB) (*GmailAPI, error) {
+	b, err := os.ReadFile("credentials.json")
+
+	if err != nil {
+		return nil, errors.Errorf("Unable to read client secret file: %v", err)
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b,
+		gmail.GmailModifyScope,
+		gmail.GmailSettingsBasicScope,
+	)
+
+	if err != nil {
+		return nil, errors.Errorf("Unable to parse client secret file to config: %v", err)
+	}
+
+	client := getClient(config)
+	service, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
+	if err != nil {
+		return nil, errors.Errorf("Unable to retrieve Gmail client: %v", err)
+	}
+
+	a := &GmailAPI{Service: service, db: db}
+	a.RefreshMessages()
+
+	return a, nil
+}
+
+func (g *GmailAPI) RefreshMessages() error {
+	listRes, err := g.Service.Users.Messages.List("me").Q("in:inbox").MaxResults(50).Do()
+	if err != nil {
+		return fmt.Errorf("failed to list messages: %w", err)
+	}
+
+	g.Messages = &listRes.Messages
+	return nil
+}
+
 // CreateFilterForGroupDelete creates a Gmail filter for the specified group type and value.
 func (g *GmailAPI) CreateFilterForGroupDelete(groupType, val string) error {
 	if val == "" {
@@ -114,113 +167,30 @@ func (g *GmailAPI) CreateFilterForGroupDelete(groupType, val string) error {
 		},
 	}
 
-	_, err := g.findOrCreateFilter(filterSpec)
-	return err
-}
-
-// Start is bullshit
-func Start(db *db.DB) (*GmailAPI, error) {
-	b, err := os.ReadFile("credentials.json")
-
-	if err != nil {
-		return nil, errors.Errorf("Unable to read client secret file: %v", err)
+	if err := g.findOrCreateFilter(filterSpec); err != nil {
+		return err
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b,
-		gmail.GmailModifyScope,
-		gmail.GmailSettingsBasicScope,
-	)
-
-	if err != nil {
-		return nil, errors.Errorf("Unable to parse client secret file to config: %v", err)
-	}
-
-	client := getClient(config)
-	service, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
-
-	if err != nil {
-		return nil, errors.Errorf("Unable to retrieve Gmail client: %v", err)
-	}
-
-	// Fetch the list of messages for navigation
-	listRes, err := service.Users.Messages.List("me").MaxResults(50).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list messages: %w", err)
-	}
-
-	return &GmailAPI{Service: service, db: db, Messages: &listRes.Messages}, nil
+	return nil
 }
 
 func (g *GmailAPI) FullMessage(id string) (*gmail.Message, error) {
 	return g.Service.Users.Messages.Get("me", id).Format("full").Do()
 }
 
-func (g *GmailAPI) ApplyFilter(filterSpec *gmail.Filter, query string, batch gmail.BatchModifyMessagesRequest) error {
-	_, err := g.findOrCreateFilter(filterSpec)
-	if err != nil {
-		return err
-	}
-
-	pageToken := ""
-
-	for {
-		var res *gmail.ListMessagesResponse
-
-		res, err = g.Service.Users.Messages.List("me").
-			MaxResults(50).
-			PageToken(pageToken).
-			Q(query).
-			Do()
-
-		if err != nil {
-			return fmt.Errorf("failed to list messages: %v", err)
-		}
-
-		var ids []string
-		for _, message := range res.Messages {
-			ids = append(ids, message.Id)
-		}
-
-		if len(ids) == 0 {
-			break
-		}
-
-		pageToken = res.NextPageToken
-
-		batch.Ids = ids
-
-		err = g.Service.Users.Messages.BatchModify("me", &batch).Do()
-
-		if err != nil {
-			return fmt.Errorf("failed to batch modify: %v", err)
-		}
-
-		if pageToken == "" {
-			break
-		} else {
-			slog.Info("continuing to next page", "query", query)
-		}
-	}
-
-	return nil
-}
-
 func (g *GmailAPI) Filters() ([]*gmail.Filter, error) {
 	filters, err := g.db.GetAll("filters")
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all filters: %v", err)
+		return nil, fmt.Errorf("failed to get all filters: %w", err)
 	}
 
 	var result []*gmail.Filter
 
 	for _, bytes := range filters {
 		var filter gmail.Filter
-		err = yaml.Unmarshal(bytes, &filter)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal: %v", err)
+		if err := json.Unmarshal(bytes, &filter); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal filter: %w", err)
 		}
 
 		result = append(result, &filter)
@@ -236,9 +206,7 @@ func (g *GmailAPI) RefreshFilters() error {
 	}
 
 	for _, filter := range filters.Filter {
-		var d []byte
-		d, err = yaml.Marshal(filter)
-
+		d, err := json.Marshal(filter)
 		if err != nil {
 			return err
 		}
@@ -252,9 +220,7 @@ func (g *GmailAPI) RefreshFilters() error {
 	}
 
 	for _, label := range labels.Labels {
-		var d []byte
-		d, err = yaml.Marshal(label)
-
+		d, err := json.Marshal(label)
 		if err != nil {
 			return err
 		}
@@ -277,7 +243,7 @@ func (g *GmailAPI) Label(id string) (*gmail.Label, error) {
 	}
 
 	var label gmail.Label
-	if err = yaml.Unmarshal(bytes, &label); err != nil {
+	if err = json.Unmarshal(bytes, &label); err != nil {
 		return nil, err
 	}
 
@@ -293,7 +259,7 @@ func (g *GmailAPI) ApplyBatch(query string, batch *gmail.BatchModifyMessagesRequ
 		Do()
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to list messages: %v", err)
+		return 0, fmt.Errorf("failed to list messages: %w", err)
 	}
 
 	var ids []string
@@ -304,69 +270,83 @@ func (g *GmailAPI) ApplyBatch(query string, batch *gmail.BatchModifyMessagesRequ
 	batch.Ids = ids
 
 	if err = g.Service.Users.Messages.BatchModify("me", batch).Do(); err != nil {
-		return 0, fmt.Errorf("failed to batch modify: %v", err)
+		return 0, fmt.Errorf("failed to batch modify: %w", err)
+	}
+
+	for _, id := range ids {
+		g.Skip(id)
 	}
 
 	return len(ids), nil
+}
+
+func (g *GmailAPI) Delete(id string) error {
+	moveToTrash := &gmail.ModifyMessageRequest{
+		RemoveLabelIds: []string{"INBOX"},
+		AddLabelIds:    []string{"TRASH"},
+	}
+
+	if err := g.Modify(id, moveToTrash); err != nil {
+		return err
+	}
+
+	g.Skip(id)
+
+	return nil
+}
+
+func (g *GmailAPI) Skip(id string) {
+	newMessages := (*g.Messages)[:0]
+	for _, m := range *g.Messages {
+		if m.Id != id {
+			newMessages = append(newMessages, m)
+		}
+	}
+	*g.Messages = newMessages
+}
+
+func (g *GmailAPI) Modify(id string, mod *gmail.ModifyMessageRequest) error {
+	_, err := g.Service.Users.Messages.Modify("me", id, mod).Do()
+	return err
 }
 
 func (g *GmailAPI) Query(query string) (*gmail.ListMessagesResponse, error) {
 	return g.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
 }
 
-func (g *GmailAPI) findOrCreateFilter(filterSpec *gmail.Filter) (_ *gmail.Filter, err error) {
+func (g *GmailAPI) findOrCreateFilter(filterSpec *gmail.Filter) error {
 	filters, err := g.db.GetAll("filters")
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all filters: %v", err)
+		return fmt.Errorf("failed to get all filters: %w", err)
 	}
 
 	for _, bytes := range filters {
 		var filter gmail.Filter
-		err = yaml.Unmarshal(bytes, &filter)
+		err = json.Unmarshal(bytes, &filter)
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal: %v", err)
+			return fmt.Errorf("failed to unmarshal: %w", err)
 		}
 
-		match := false
-
-		if filterSpec.Action.AddLabelIds == nil {
-			filterSpec.Action.AddLabelIds = []string{}
-		}
-
-		if filterSpec.Action.RemoveLabelIds == nil {
-			filterSpec.Action.RemoveLabelIds = []string{}
-		}
-
-		if reflect.DeepEqual(filter.Action.AddLabelIds, filterSpec.Action.AddLabelIds) &&
-			reflect.DeepEqual(filter.Action.RemoveLabelIds, filterSpec.Action.RemoveLabelIds) {
-			match = true
-		}
-
-		if match {
+		if filtersEqual(&filter, filterSpec) {
 			slog.Debug("matched filter!")
-			return
+			return nil
 		}
 	}
 
 	filter, err := g.Service.Users.Settings.Filters.Create("me", filterSpec).Do()
-
 	if err != nil {
-		err = errors.Errorf("could not create filter: %v\n%v", err, filterSpec)
-		return
+		return fmt.Errorf("could not create filter: %w\n%v", err, filterSpec)
 	}
 
-	d, err := yaml.Marshal(filter)
+	d, err := json.Marshal(filter)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
-	err = g.db.Upsert("filters", filter.Id, d)
-
-	if err != nil {
-		return
+	if err := g.db.Upsert("filters", filter.Id, d); err != nil {
+		return fmt.Errorf("failed to upsert: %w", err)
 	}
 
-	return
+	return nil
 }

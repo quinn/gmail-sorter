@@ -1,0 +1,13 @@
+[
+  {
+    "label": "dev",
+    "adapter": "Delve",
+    "program": ".",
+    "args": ["server"],
+    "env": {
+      "PORT": "5001"
+    },
+    "request": "launch",
+    "mode": "debug"
+  }
+]

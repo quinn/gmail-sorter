@@ -27,10 +27,11 @@ func filters(c echo.Context) error {
 	api := middleware.GetGmail(c)
 
 	filters, err := api.Filters()
-
 	if err != nil {
 		return err
 	}
+
+	// filters := []*gmail.Filter{}
 
 	actions := []models.ActionLink{
 		FiltersRefreshAction.Link(),

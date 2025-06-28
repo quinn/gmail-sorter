@@ -5,5 +5,10 @@ import "github.com/quinn/gmail-sorter/internal/web/views/ui"
 templ Index() {
 	@ui.Layout(nil) {
 		<h1>Index!</h1>
+		<script type="text/javascript">
+			document.addEventListener("test-event", function() {
+				console.log("test-event")
+			})
+		</script>
 	}
 }
