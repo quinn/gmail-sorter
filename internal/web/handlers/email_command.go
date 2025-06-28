@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"go.quinn.io/ccf/htmx"
 )
 
 func init() {
@@ -37,6 +38,8 @@ func emailCommand(c echo.Context) error {
 		err = api.Delete(id)
 	case "archive":
 		err = api.Archive(id)
+	case "open":
+		return htmx.Redirect(c, "https://mail.google.com/mail/u/0/#inbox/"+id)
 	default:
 		return fmt.Errorf("invalid command: %s", c.Param("command"))
 	}

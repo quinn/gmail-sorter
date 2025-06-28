@@ -44,6 +44,9 @@ func email(c echo.Context) error {
 		EmailCommandAction.Link(
 			models.WithParams(id, "delete"),
 		),
+		EmailCommandAction.Link(
+			models.WithParams(id, "open"),
+		),
 	}
 
 	return pages.Email(email, actions).Render(c.Request().Context(), c.Response().Writer)

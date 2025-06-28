@@ -7,10 +7,11 @@ import (
 	"go.quinn.io/ccf/assets"
 )
 
-var shortcutKeys = []string{"a", "s", "d", "f", "q", "w", "e", "r", "t"}
-
 templ Layout(links []models.ActionLink) {
-	{{ c := middleware.GetEcho(ctx) }}
+	{{
+		c := middleware.GetEcho(ctx)
+		shortcuts := models.AssignShortcuts(links)
+	}}
 	<!DOCTYPE html>
 	<html>
 		<head>
@@ -40,7 +41,7 @@ templ Layout(links []models.ActionLink) {
 				for i, link := range links {
 					{{
 						action := link.Action()
-						shortcut := shortcutKeys[i%len(shortcutKeys)]
+						shortcut := string(shortcuts[i])
 						var params []interface{}
 						for _, param := range link.Params {
 							params = append(params, param)

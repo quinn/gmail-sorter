@@ -47,7 +47,7 @@ func Confirm(actions []models.ActionLink) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"center\"><div class=\"bg-red-600 text-center p-4 border border-red-400\"><h1>Confirm Action</h1><p class=\"mt-4\">Are you sure you want to proceed with this action?</p><div class=\"text-left border border-red-400 p-4 bg-red-800 mt-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"center\"><div class=\"warning\"><h1>Confirm Action</h1><p class=\"mt-4\">Are you sure you want to proceed with this action?</p><div class=\"text-left border border-red-400 p-4 bg-red-800 mt-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

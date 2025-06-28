@@ -28,14 +28,18 @@ func (a Action) Handler() echo.HandlerFunc {
 		)
 		c.Set("link", link)
 		ctx := c.Request().Context()
-		withValue := context.WithValue(ctx, LinkContextKey{}, link)
+		withValue := context.WithValue(ctx, LinkContextKey{}, &link)
 		c.SetRequest(c.Request().WithContext(withValue))
 		return a.UnwrappedHandler(c)
 	}
 }
 
-func GetLink(ctx context.Context) ActionLink {
-	return ctx.Value(LinkContextKey{}).(ActionLink)
+func GetLink(ctx context.Context) *ActionLink {
+	val := ctx.Value(LinkContextKey{})
+	if val == nil {
+		return nil
+	}
+	return val.(*ActionLink)
 }
 
 type LinkOpt func(*ActionLink)

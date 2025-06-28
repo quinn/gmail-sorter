@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"strings"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"strings"
 )
 
 templ Email(email models.EmailResponse) {
@@ -16,6 +16,8 @@ templ Email(email models.EmailResponse) {
 			<strong>Subject:</strong> { email.Subject }
 			<br/>
 			<strong>Date:</strong> { email.Date }
+			<br/>
+			<strong>Link:</strong> <a href={ "https://mail.google.com/mail/u/0/#inbox/" + email.ID }>Open</a>
 			<br/>
 		</div>
 		<hr/>

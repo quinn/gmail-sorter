@@ -51,7 +51,9 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 			renderErr = ui.FlashMessage("error", err.Error()).Render(c.Request().Context(), c.Response().Writer)
 		} else {
 			c.Response().WriteHeader(statusCode)
-			renderErr = pages.ErrorPage(err.Error()).Render(c.Request().Context(), c.Response().Writer)
+			renderErr = pages.ErrorPage([]models.ActionLink{
+				handlers.IndexAction.Link(),
+			}, err.Error()).Render(c.Request().Context(), c.Response().Writer)
 		}
 
 		if renderErr != nil {
@@ -59,7 +61,6 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 		}
 	}
 
-	e.Use(middleware.Messages(api.Messages))
 	e.Use(middleware.Gmail(api))
 	e.Use(middleware.Echo)
 

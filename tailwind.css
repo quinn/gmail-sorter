@@ -26,4 +26,8 @@
   .center {
     @apply flex flex-col items-center justify-center h-full;
   }
+
+  .warning {
+    @apply bg-red-600 text-center p-4 border border-red-400;
+  }
 }

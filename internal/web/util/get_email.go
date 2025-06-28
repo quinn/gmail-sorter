@@ -10,7 +10,8 @@ import (
 )
 
 func GetEmail(c echo.Context, id string) (email models.EmailResponse, err error) {
-	messages := middleware.GetMessages(c)
+	api := middleware.GetGmail(c)
+	messages := api.Messages
 	var msg *gmail.Message
 	var idx int
 	for i, m := range *messages {
@@ -26,7 +27,7 @@ func GetEmail(c echo.Context, id string) (email models.EmailResponse, err error)
 	}
 
 	if msg.Payload == nil {
-		fullMsg, err := middleware.GetGmail(c).FullMessage(msg.Id)
+		fullMsg, err := api.FullMessage(msg.Id)
 		if err != nil {
 			return email, fmt.Errorf("failed to get email: %w", err)
 		}
