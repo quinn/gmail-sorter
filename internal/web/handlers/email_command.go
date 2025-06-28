@@ -22,22 +22,27 @@ var EmailCommandAction models.Action = models.Action{
 }
 
 func emailCommandLabel(link models.ActionLink) string {
-	return "Command"
+	return link.Params[1]
 }
 
 // emailCommand handles POST /emails/:id/command/:command
 func emailCommand(c echo.Context) error {
 	id := c.Param("id")
 	api := middleware.GetGmail(c)
+	var err error
 	switch c.Param("command") {
 	case "skip":
 		api.Skip(id)
 	case "delete":
-		api.Delete(id)
+		err = api.Delete(id)
 	case "archive":
-		api.Archive(id)
+		err = api.Archive(id)
 	default:
 		return fmt.Errorf("invalid command: %s", c.Param("command"))
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/")

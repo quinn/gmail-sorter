@@ -36,16 +36,13 @@ func email(c echo.Context) error {
 			models.WithParams(id),
 		),
 		EmailCommandAction.Link(
-			models.WithParams(id),
-			models.WithParams("skip"),
+			models.WithParams(id, "skip"),
 		),
 		EmailCommandAction.Link(
-			models.WithParams(id),
-			models.WithParams("archive"),
+			models.WithParams(id, "archive"),
 		),
 		EmailCommandAction.Link(
-			models.WithParams(id),
-			models.WithParams("delete"),
+			models.WithParams(id, "delete"),
 		),
 	}
 

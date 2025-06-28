@@ -89,7 +89,6 @@ type GmailAPI struct {
 func (g *GmailAPI) Archive(id string) error {
 	moveToArchive := &gmail.ModifyMessageRequest{
 		RemoveLabelIds: []string{"INBOX"},
-		AddLabelIds:    []string{"ARCHIVE"},
 	}
 
 	if err := g.Modify(id, moveToArchive); err != nil {
@@ -300,6 +299,8 @@ func (g *GmailAPI) Skip(id string) {
 	for _, m := range *g.Messages {
 		if m.Id != id {
 			newMessages = append(newMessages, m)
+		} else {
+			slog.Debug("found skip id")
 		}
 	}
 	*g.Messages = newMessages
