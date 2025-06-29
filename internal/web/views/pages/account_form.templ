@@ -1,0 +1,71 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/quinn/gmail-sorter/pkg/db"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+)
+
+templ AccountForm(account *db.OAuthAccount) {
+	@ui.Layout(nil) {
+		<h2>
+			if account != nil {
+				Edit
+			} else {
+				Add
+			}
+			OAuth Account
+		</h2>
+		<form
+			method="POST"
+			if account != nil {
+				action={ templ.URL("/accounts/" + fmt.Sprint(account.ID)) }
+			} else {
+				action="/accounts"
+			}
+		>
+			<label>
+				Provider:
+				<input
+					name="Provider"
+					if account != nil {
+						value={ account.Provider }
+					} else {
+						value=""
+					}
+					required
+				/>
+			</label>
+			<br/>
+			<label>
+				Email:
+				<input
+					name="Email"
+					if account != nil {
+						value={ account.Email }
+					} else {
+						value=""
+					}
+					required
+				/>
+			</label>
+			<br/>
+			<label>
+				Token JSON:
+				<textarea name="TokenJSON">
+					if account != nil {
+						{ account.TokenJSON }
+					}
+				</textarea>
+			</label>
+			<br/>
+			<button type="submit" class="btn btn-primary">
+				if account != nil {
+					Update
+				} else {
+					Create
+				}
+			</button>
+		</form>
+	}
+}

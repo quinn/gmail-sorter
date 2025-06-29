@@ -67,6 +67,11 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 	e.GET("/healthz", handlers.Health)
 	e.GET("/oauth/:provider/start", handlers.OauthStart)
 	e.GET("/oauth/:provider/callback", handlers.OauthCallback)
+	e.GET("/accounts", handlers.Accounts)
+	e.POST("/accounts", handlers.CreateAccount)
+	e.GET("/accounts/:id", handlers.GetAccount)
+	e.PUT("/accounts/:id", handlers.UpdateAccount)
+	e.DELETE("/accounts/:id", handlers.DeleteAccount)
 
 	e.GET("/test", func(c echo.Context) error {
 		c.Response().Header().Set("HX-Trigger", "test-event")

@@ -1,0 +1,44 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+	"github.com/quinn/gmail-sorter/pkg/db"
+	"time"
+)
+
+templ Accounts(accounts []db.OAuthAccount) {
+	@ui.Layout(nil) {
+		<h2>OAuth Accounts</h2>
+		<a href="/oauth/google/start" class="btn">Add Google Account</a>
+		<table>
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Provider</th>
+					<th>Email</th>
+					<th>Created</th>
+					<th>Updated</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, acct := range accounts {
+					<tr>
+						<td>{ acct.ID }</td>
+						<td>{ acct.Provider }</td>
+						<td>{ acct.Email }</td>
+						<td>{ time.Unix(acct.CreatedAt, 0).Format("2006-01-02 15:04") }</td>
+						<td>{ time.Unix(acct.UpdatedAt, 0).Format("2006-01-02 15:04") }</td>
+						<td>
+							<form method="POST" action={ templ.URL("/accounts/" + fmt.Sprint(acct.ID)) } onsubmit="return confirm('Delete this account?');">
+								<input type="hidden" name="_method" value="DELETE" />
+								<button type="submit" class="btn btn-danger">Delete</button>
+							</form>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}

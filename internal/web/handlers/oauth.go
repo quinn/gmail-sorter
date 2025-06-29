@@ -6,12 +6,22 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+
+	"github.com/quinn/gmail-sorter/internal/web/middleware"
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/pages"
+	"github.com/quinn/gmail-sorter/pkg/db"
+	"gorm.io/gorm"
 )
+
+// import oauth_account.go helpers
+// (GORM model and InitOAuthDB are in the same package, so can be used directly)
 
 var (
 	// Scopes for Gmail API
@@ -38,7 +48,7 @@ func OauthConfig() (*oauth2.Config, error) {
 // OauthStart redirects user to the provider's OAuth2 consent screen
 func OauthStart(c echo.Context) error {
 	provider := c.Param("provider")
-	config, err := LoadOauthConfig(OauthProvider(provider))
+	config, err := models.LoadOauthConfig(models.OauthProvider(provider))
 	if err != nil {
 		return err
 	}
@@ -46,10 +56,10 @@ func OauthStart(c echo.Context) error {
 	return c.Redirect(http.StatusFound, url)
 }
 
-// OauthCallback handles the OAuth2 callback and saves token.json per provider
+// OauthCallback handles the OAuth2 callback and saves token in SQLite via GORM
 func OauthCallback(c echo.Context) error {
 	provider := c.Param("provider")
-	config, err := LoadOauthConfig(OauthProvider(provider))
+	config, err := models.LoadOauthConfig(models.OauthProvider(provider))
 	if err != nil {
 		return err
 	}
@@ -61,18 +71,131 @@ func OauthCallback(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("token exchange failed: %w", err)
 	}
-	tokenFile := provider + "_token.json"
-	f, err := os.Create(tokenFile)
+
+	email, err := getEmailFromToken(config, tok)
 	if err != nil {
-		return fmt.Errorf("could not create %s: %w", tokenFile, err)
+		return fmt.Errorf("failed to get email: %w", err)
 	}
-	defer f.Close()
-	if err := json.NewEncoder(f).Encode(tok); err != nil {
-		return fmt.Errorf("could not encode token: %w", err)
+
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return fmt.Errorf("failed to get db from context")
 	}
-	return c.Redirect(http.StatusFound, "/")
+	tokenJSON, err := json.Marshal(tok)
+	if err != nil {
+		return fmt.Errorf("failed to marshal token: %w", err)
+	}
+	acct := db.OAuthAccount{
+		Provider:  provider,
+		Email:     email,
+		TokenJSON: string(tokenJSON),
+		CreatedAt: time.Now().Unix(),
+		UpdatedAt: time.Now().Unix(),
+	}
+	// Upsert (replace if exists)
+	var existing db.OAuthAccount
+	err = dbConn.Where("provider = ? AND email = ?", provider, email).First(&existing).Error
+	if err == nil {
+		acct.ID = existing.ID
+		dbConn.Save(&acct)
+	} else if err == gorm.ErrRecordNotFound {
+		dbConn.Create(&acct)
+	} else {
+		return fmt.Errorf("db error: %w", err)
+	}
+	return c.Redirect(http.StatusFound, "/accounts")
 }
 
-func Accounts(c echo.Context) error {
+// getEmailFromToken fetches the user's email using the token and config
+func getEmailFromToken(config *oauth2.Config, token *oauth2.Token) (string, error) {
+	client := config.Client(context.Background(), token)
+	service, err := gmail.New(client)
+	if err != nil {
+		return "", err
+	}
+	profile, err := service.Users.GetProfile("me").Do()
+	if err != nil {
+		return "", err
+	}
+	return profile.EmailAddress, nil
+}
 
+// Accounts lists all OAuth accounts
+func Accounts(c echo.Context) error {
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return c.String(http.StatusInternalServerError, "failed to get db from context")
+	}
+	var accounts []db.OAuthAccount
+	err := dbConn.Find(&accounts).Error
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "failed to list accounts")
+	}
+	return pages.Accounts(accounts).Render(c.Request().Context(), c.Response().Writer)
+}
+
+// CreateAccount handles POST /accounts
+func CreateAccount(c echo.Context) error {
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return fmt.Errorf("failed to get db from context")
+	}
+	var acct db.OAuthAccount
+	if err := c.Bind(&acct); err != nil {
+		return err
+	}
+	acct.CreatedAt = time.Now().Unix()
+	acct.UpdatedAt = time.Now().Unix()
+	if err := dbConn.Create(&acct).Error; err != nil {
+		return fmt.Errorf("failed to create account: %w", err)
+	}
+	return c.Redirect(http.StatusSeeOther, "/accounts")
+}
+
+// GetAccount handles GET /accounts/:id
+func GetAccount(c echo.Context) error {
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return fmt.Errorf("failed to get db from context")
+	}
+	var acct db.OAuthAccount
+	id := c.Param("id")
+	if err := dbConn.First(&acct, id).Error; err != nil {
+		return err
+	}
+	return pages.AccountForm(&acct).Render(c.Request().Context(), c.Response().Writer)
+}
+
+// UpdateAccount handles PUT /accounts/:id
+func UpdateAccount(c echo.Context) error {
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return fmt.Errorf("failed to get db from context")
+	}
+	var acct db.OAuthAccount
+	id := c.Param("id")
+	if err := dbConn.First(&acct, id).Error; err != nil {
+		return err
+	}
+	if err := c.Bind(&acct); err != nil {
+		return err
+	}
+	acct.UpdatedAt = time.Now().Unix()
+	if err := dbConn.Save(&acct).Error; err != nil {
+		return fmt.Errorf("failed to update account: %w", err)
+	}
+	return c.Redirect(http.StatusSeeOther, "/accounts")
+}
+
+// DeleteAccount handles DELETE /accounts/:id
+func DeleteAccount(c echo.Context) error {
+	dbConn := middleware.GetDB(c)
+	if dbConn == nil {
+		return fmt.Errorf("failed to get db from context")
+	}
+	id := c.Param("id")
+	if err := dbConn.Delete(&db.OAuthAccount{}, id).Error; err != nil {
+		return fmt.Errorf("failed to delete account: %w", err)
+	}
+	return c.Redirect(http.StatusSeeOther, "/accounts")
 }
