@@ -15,7 +15,6 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/pkg/db"
-	"gorm.io/gorm"
 )
 
 // OauthStart redirects user to the provider's OAuth2 consent screen
@@ -66,14 +65,7 @@ func OauthCallback(c echo.Context) error {
 		UpdatedAt: time.Now().Unix(),
 	}
 	// Upsert (replace if exists)
-	var existing db.OAuthAccount
-	err = dbConn.Where("provider = ? AND email = ?", provider, email).First(&existing).Error
-	if err == nil {
-		acct.ID = existing.ID
-		dbConn.Save(&acct)
-	} else if err == gorm.ErrRecordNotFound {
-		dbConn.Create(&acct)
-	} else {
+	if err := dbConn.UpsertOAuthAccount(&acct); err != nil {
 		return fmt.Errorf("db error: %w", err)
 	}
 	return c.Redirect(http.StatusFound, "/accounts")

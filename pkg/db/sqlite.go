@@ -1,5 +1,7 @@
 package db
 
+import "gorm.io/gorm"
+
 type OAuthAccount struct {
 	ID        uint   `gorm:"primaryKey"`
 	Provider  string `gorm:"index"`
@@ -22,6 +24,20 @@ func (d *DB) GetOAuthAccountByID(id string) (*OAuthAccount, error) {
 		return nil, err
 	}
 	return &acct, nil
+}
+
+// UpsertOAuthAccount inserts or updates an OAuthAccount by provider and email
+func (d *DB) UpsertOAuthAccount(acct *OAuthAccount) error {
+	var existing OAuthAccount
+	err := d.gorm.Where("provider = ? AND email = ?", acct.Provider, acct.Email).First(&existing).Error
+	if err == nil {
+		acct.ID = existing.ID
+		return d.gorm.Save(acct).Error
+	} else if err.Error() == "record not found" || err == gorm.ErrRecordNotFound {
+		return d.gorm.Create(acct).Error
+	} else {
+		return err
+	}
 }
 
 // ListOAuthAccounts returns all OAuthAccounts
