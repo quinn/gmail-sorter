@@ -13,7 +13,7 @@ var keysmaps = map[string]map[string][]rune{
 	},
 }
 
-var shortcutKeys = keysmaps["dvorak"]["right"]
+var shortcutKeys = keysmaps["querty"]["right"]
 
 func AssignShortcuts(links []ActionLink) []rune {
 	shortcuts := make([]rune, len(links))

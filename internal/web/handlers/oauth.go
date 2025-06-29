@@ -35,21 +35,23 @@ func OauthConfig() (*oauth2.Config, error) {
 	return config, nil
 }
 
-// OauthStart redirects user to Google's OAuth2 consent screen
+// OauthStart redirects user to the provider's OAuth2 consent screen
 func OauthStart(c echo.Context) error {
-	config, err := OauthConfig()
+	provider := c.Param("provider")
+	config, err := LoadOauthConfig(OauthProvider(provider))
 	if err != nil {
-		return fmt.Errorf("failed to load OAuth config: %w", err)
+		return err
 	}
 	url := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	return c.Redirect(http.StatusFound, url)
 }
 
-// OauthCallback handles the OAuth2 callback and saves token.json
+// OauthCallback handles the OAuth2 callback and saves token.json per provider
 func OauthCallback(c echo.Context) error {
-	config, err := OauthConfig()
+	provider := c.Param("provider")
+	config, err := LoadOauthConfig(OauthProvider(provider))
 	if err != nil {
-		return fmt.Errorf("failed to load OAuth config: %w", err)
+		return err
 	}
 	code := c.QueryParam("code")
 	if code == "" {
@@ -59,13 +61,18 @@ func OauthCallback(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("token exchange failed: %w", err)
 	}
-	f, err := os.Create("token.json")
+	tokenFile := provider + "_token.json"
+	f, err := os.Create(tokenFile)
 	if err != nil {
-		return fmt.Errorf("could not create token.json: %w", err)
+		return fmt.Errorf("could not create %s: %w", tokenFile, err)
 	}
 	defer f.Close()
 	if err := json.NewEncoder(f).Encode(tok); err != nil {
 		return fmt.Errorf("could not encode token: %w", err)
 	}
 	return c.Redirect(http.StatusFound, "/")
+}
+
+func Accounts(c echo.Context) error {
+
 }
