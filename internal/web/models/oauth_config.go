@@ -22,7 +22,6 @@ type OauthConfigFile struct {
 	Scopes       []string `json:"scopes"`
 	AuthURL      string   `json:"auth_url"`
 	TokenURL     string   `json:"token_url"`
-	RedirectURL  string   `json:"redirect_url"`
 }
 
 type OauthConfigMap map[OauthProvider]OauthConfigFile
@@ -48,7 +47,7 @@ func LoadOauthConfig(provider OauthProvider) (*oauth2.Config, error) {
 					AuthURL:  cfg.AuthURL,
 					TokenURL: cfg.TokenURL,
 				},
-				RedirectURL: cfg.RedirectURL,
+				RedirectURL: fmt.Sprintf("http://localhost:%s/oauth/%s/callback", os.Getenv("PORT"), provider),
 			}, nil
 		}
 	}
