@@ -1,10 +1,5 @@
 package db
 
-import (
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-)
-
 type OAuthAccount struct {
 	ID        uint   `gorm:"primaryKey"`
 	Provider  string `gorm:"index"`
