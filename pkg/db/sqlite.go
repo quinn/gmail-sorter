@@ -16,7 +16,7 @@ func (d *DB) CreateOAuthAccount(acct *OAuthAccount) error {
 }
 
 // GetOAuthAccountByID retrieves an OAuthAccount by ID
-func (d *DB) GetOAuthAccountByID(id uint) (*OAuthAccount, error) {
+func (d *DB) GetOAuthAccountByID(id string) (*OAuthAccount, error) {
 	var acct OAuthAccount
 	if err := d.gorm.First(&acct, id).Error; err != nil {
 		return nil, err
@@ -39,6 +39,6 @@ func (d *DB) UpdateOAuthAccount(acct *OAuthAccount) error {
 }
 
 // DeleteOAuthAccount deletes an OAuthAccount by ID
-func (d *DB) DeleteOAuthAccount(id uint) error {
+func (d *DB) DeleteOAuthAccount(id string) error {
 	return d.gorm.Delete(&OAuthAccount{}, id).Error
 }

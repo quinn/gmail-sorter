@@ -131,12 +131,12 @@ func GetAccount(c echo.Context) error {
 	if dbConn == nil {
 		return fmt.Errorf("failed to get db from context")
 	}
-	var acct db.OAuthAccount
 	id := c.Param("id")
-	if err := dbConn.First(&acct, id).Error; err != nil {
+	acct, err := dbConn.GetOAuthAccountByID(id)
+	if err != nil {
 		return err
 	}
-	return pages.AccountForm(&acct).Render(c.Request().Context(), c.Response().Writer)
+	return pages.AccountForm(acct).Render(c.Request().Context(), c.Response().Writer)
 }
 
 // UpdateAccount handles PUT /accounts/:id
@@ -145,16 +145,16 @@ func UpdateAccount(c echo.Context) error {
 	if dbConn == nil {
 		return fmt.Errorf("failed to get db from context")
 	}
-	var acct db.OAuthAccount
 	id := c.Param("id")
-	if err := dbConn.First(&acct, id).Error; err != nil {
+	acct, err := dbConn.GetOAuthAccountByID(id)
+	if err != nil {
 		return err
 	}
-	if err := c.Bind(&acct); err != nil {
+	if err := c.Bind(acct); err != nil {
 		return err
 	}
 	acct.UpdatedAt = time.Now().Unix()
-	if err := dbConn.Save(&acct).Error; err != nil {
+	if err := dbConn.UpdateOAuthAccount(acct); err != nil {
 		return fmt.Errorf("failed to update account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")
@@ -167,7 +167,7 @@ func DeleteAccount(c echo.Context) error {
 		return fmt.Errorf("failed to get db from context")
 	}
 	id := c.Param("id")
-	if err := dbConn.Delete(&db.OAuthAccount{}, id).Error; err != nil {
+	if err := dbConn.DeleteOAuthAccount(id); err != nil {
 		return fmt.Errorf("failed to delete account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")
