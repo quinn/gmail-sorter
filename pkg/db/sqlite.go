@@ -15,61 +15,35 @@ type OAuthAccount struct {
 	UpdatedAt int64
 }
 
-// InitOAuthDB initializes the SQLite DB for OAuth accounts (singleton)
-func InitOAuthDB() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("sqlite.db"), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-	err = db.AutoMigrate(&OAuthAccount{})
-	return db, err
+// CreateOAuthAccount inserts a new OAuthAccount
+func (d *DB) CreateOAuthAccount(acct *OAuthAccount) error {
+	return d.gorm.Create(acct).Error
 }
 
-// CRUD helpers (optional, for clarity)
-func CreateOAuthAccount(acct *OAuthAccount) error {
-	db, err := InitOAuthDB()
-	if err != nil {
-		return err
-	}
-	return db.Create(acct).Error
-}
-
-func GetOAuthAccountByID(id uint) (*OAuthAccount, error) {
-	db, err := InitOAuthDB()
-	if err != nil {
-		return nil, err
-	}
+// GetOAuthAccountByID retrieves an OAuthAccount by ID
+func (d *DB) GetOAuthAccountByID(id uint) (*OAuthAccount, error) {
 	var acct OAuthAccount
-	if err := db.First(&acct, id).Error; err != nil {
+	if err := d.gorm.First(&acct, id).Error; err != nil {
 		return nil, err
 	}
 	return &acct, nil
 }
 
-func ListOAuthAccounts() ([]OAuthAccount, error) {
-	db, err := InitOAuthDB()
-	if err != nil {
-		return nil, err
-	}
+// ListOAuthAccounts returns all OAuthAccounts
+func (d *DB) ListOAuthAccounts() ([]OAuthAccount, error) {
 	var accounts []OAuthAccount
-	if err := db.Find(&accounts).Error; err != nil {
+	if err := d.gorm.Find(&accounts).Error; err != nil {
 		return nil, err
 	}
 	return accounts, nil
 }
 
-func UpdateOAuthAccount(acct *OAuthAccount) error {
-	db, err := InitOAuthDB()
-	if err != nil {
-		return err
-	}
-	return db.Save(acct).Error
+// UpdateOAuthAccount updates an existing OAuthAccount
+func (d *DB) UpdateOAuthAccount(acct *OAuthAccount) error {
+	return d.gorm.Save(acct).Error
 }
 
-func DeleteOAuthAccount(id uint) error {
-	db, err := InitOAuthDB()
-	if err != nil {
-		return err
-	}
-	return db.Delete(&OAuthAccount{}, id).Error
+// DeleteOAuthAccount deletes an OAuthAccount by ID
+func (d *DB) DeleteOAuthAccount(id uint) error {
+	return d.gorm.Delete(&OAuthAccount{}, id).Error
 }

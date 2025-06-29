@@ -10,9 +10,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/pkg/db"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
@@ -101,30 +101,32 @@ func (g *GmailAPI) Archive(id string) error {
 }
 
 // Start is bullshit
-func Start(db *db.DB) (*GmailAPI, error) {
-	b, err := os.ReadFile("credentials.json")
-
+func Start(dbConn *db.DB) (*GmailAPI, error) {
+	// Use new oauth_credentials.json loader for Google provider
+	config, err := models.LoadOauthConfig("google")
 	if err != nil {
-		return nil, errors.Errorf("Unable to read client secret file: %v", err)
+		return nil, errors.Errorf("Unable to load oauth config: %v", err)
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b,
-		gmail.GmailModifyScope,
-		gmail.GmailSettingsBasicScope,
-	)
-
+	var acct db.OAuthAccount
+	err = dbConn.gorm.Where("provider = ?", "google").First(&acct).Error
 	if err != nil {
-		return nil, errors.Errorf("Unable to parse client secret file to config: %v", err)
+		return nil, errors.Errorf("No Google OAuth account found: %v", err)
 	}
 
-	client := getClient(config)
+	var token oauth2.Token
+	err = json.Unmarshal([]byte(acct.TokenJSON), &token)
+	if err != nil {
+		return nil, errors.Errorf("Failed to unmarshal token: %v", err)
+	}
+
+	client := config.Client(context.Background(), &token)
 	service, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		return nil, errors.Errorf("Unable to retrieve Gmail client: %v", err)
 	}
 
-	a := &GmailAPI{Service: service, db: db}
+	a := &GmailAPI{Service: service, db: dbConn}
 	a.RefreshMessages()
 
 	return a, nil

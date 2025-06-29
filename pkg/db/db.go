@@ -112,8 +112,10 @@ func NewDB() (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if err := gormdb.AutoMigrate(&OAuthAccount{}); err != nil {
 		return nil, err
 	}
+
 	return &DB{db: db, gorm: gormdb}, nil
 }
