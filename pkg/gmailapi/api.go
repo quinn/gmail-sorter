@@ -4,12 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
-	"net/http"
-	"os"
 
-	"github.com/pkg/errors"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/pkg/db"
 	"golang.org/x/oauth2"
@@ -17,72 +13,9 @@ import (
 	"google.golang.org/api/option"
 )
 
-var tokFile = "token.json"
-
-// Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) *http.Client {
-	// The file token.json stores the user's access and refresh tokens, and is
-	// created automatically when the authorization flow completes for the first
-	// time.
-	tok, err := tokenFromFile(tokFile)
-
-	if err != nil {
-		tok = getTokenFromWeb(config)
-		saveToken(tokFile, tok)
-	}
-	return config.Client(context.Background(), tok)
-}
-
-// Request a token from the web, then returns the retrieved token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
-
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
-	}
-
-	tok, err := config.Exchange(context.TODO(), authCode)
-	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
-	}
-	return tok
-}
-
-// Retrieves a token from a local file.
-func tokenFromFile(file string) (*oauth2.Token, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-	tok := &oauth2.Token{}
-	err = json.NewDecoder(f).Decode(tok)
-	return tok, err
-}
-
-// Saves a token to a file path.
-func saveToken(path string, token *oauth2.Token) {
-	fmt.Printf("Saving credential file to: %s\n", path)
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Fatalf("Unable to cache oauth token: %v", err)
-	}
-	defer f.Close()
-
-	err = json.NewEncoder(f).Encode(token)
-
-	if err != nil {
-		log.Fatalf("Could not encode JSON: %v", err)
-	}
-}
-
 type GmailAPI struct {
 	Service  *gmail.Service
-	db       *db.DB
+	DB       *db.DB
 	Messages *[]*gmail.Message
 }
 
@@ -105,28 +38,27 @@ func Start(dbConn *db.DB) (*GmailAPI, error) {
 	// Use new oauth_credentials.json loader for Google provider
 	config, err := models.LoadOauthConfig("google")
 	if err != nil {
-		return nil, errors.Errorf("Unable to load oauth config: %v", err)
+		return nil, fmt.Errorf("failed to load oauth config: %w", err)
 	}
 
-	var acct db.OAuthAccount
-	err = dbConn.gorm.Where("provider = ?", "google").First(&acct).Error
+	acct, err := dbConn.GetOAuthAccountByProvider("google")
 	if err != nil {
-		return nil, errors.Errorf("No Google OAuth account found: %v", err)
+		return nil, fmt.Errorf("failed to get oauth account: %w", err)
 	}
 
 	var token oauth2.Token
 	err = json.Unmarshal([]byte(acct.TokenJSON), &token)
 	if err != nil {
-		return nil, errors.Errorf("Failed to unmarshal token: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal token: %w", err)
 	}
 
 	client := config.Client(context.Background(), &token)
 	service, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
-		return nil, errors.Errorf("Unable to retrieve Gmail client: %v", err)
+		return nil, fmt.Errorf("failed to retrieve Gmail client: %w", err)
 	}
 
-	a := &GmailAPI{Service: service, db: dbConn}
+	a := &GmailAPI{Service: service, DB: dbConn}
 	a.RefreshMessages()
 
 	return a, nil
@@ -180,7 +112,7 @@ func (g *GmailAPI) FullMessage(id string) (*gmail.Message, error) {
 }
 
 func (g *GmailAPI) Filters() ([]*gmail.Filter, error) {
-	filters, err := g.db.GetAll("filters")
+	filters, err := g.DB.GetAll("filters")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all filters: %w", err)
@@ -212,7 +144,7 @@ func (g *GmailAPI) RefreshFilters() error {
 			return err
 		}
 
-		g.db.Upsert("filters", filter.Id, d)
+		g.DB.Upsert("filters", filter.Id, d)
 	}
 
 	labels, err := g.Service.Users.Labels.List("me").Do()
@@ -226,14 +158,14 @@ func (g *GmailAPI) RefreshFilters() error {
 			return err
 		}
 
-		g.db.Upsert("labels", label.Id, d)
+		g.DB.Upsert("labels", label.Id, d)
 	}
 
 	return nil
 }
 
 func (g *GmailAPI) Label(id string) (*gmail.Label, error) {
-	bytes, err := g.db.Get("labels", id)
+	bytes, err := g.DB.Get("labels", id)
 
 	if err != nil {
 		return nil, err
@@ -318,7 +250,7 @@ func (g *GmailAPI) Query(query string) (*gmail.ListMessagesResponse, error) {
 }
 
 func (g *GmailAPI) findOrCreateFilter(filterSpec *gmail.Filter) error {
-	filters, err := g.db.GetAll("filters")
+	filters, err := g.DB.GetAll("filters")
 	if err != nil {
 		return fmt.Errorf("failed to get all filters: %w", err)
 	}
@@ -347,7 +279,7 @@ func (g *GmailAPI) findOrCreateFilter(filterSpec *gmail.Filter) error {
 		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
-	if err := g.db.Upsert("filters", filter.Id, d); err != nil {
+	if err := g.DB.Upsert("filters", filter.Id, d); err != nil {
 		return fmt.Errorf("failed to upsert: %w", err)
 	}
 

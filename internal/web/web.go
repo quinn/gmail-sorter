@@ -13,7 +13,6 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/db"
 	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"go.quinn.io/ccf/assets"
 )
@@ -62,12 +61,7 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 		}
 	}
 
-	dbConn, err := db.InitOAuthDB()
-	if err != nil {
-		return nil, err
-	}
-
-	e.Use(middleware.DB(dbConn))
+	e.Use(middleware.DB(api.DB))
 	e.Use(middleware.Echo)
 	e.Use(middleware.Gmail(api))
 

@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
@@ -19,31 +17,6 @@ import (
 	"github.com/quinn/gmail-sorter/pkg/db"
 	"gorm.io/gorm"
 )
-
-// import oauth_account.go helpers
-// (GORM model and InitOAuthDB are in the same package, so can be used directly)
-
-var (
-	// Scopes for Gmail API
-	oauthScopes = []string{
-		gmail.GmailReadonlyScope,
-		gmail.GmailModifyScope,
-		gmail.GmailSettingsBasicScope,
-	}
-)
-
-// OauthConfig loads credentials.json and returns an *oauth2.Config
-func OauthConfig() (*oauth2.Config, error) {
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		return nil, err
-	}
-	config, err := google.ConfigFromJSON(b, oauthScopes...)
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
-}
 
 // OauthStart redirects user to the provider's OAuth2 consent screen
 func OauthStart(c echo.Context) error {
