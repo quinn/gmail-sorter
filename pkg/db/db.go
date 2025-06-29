@@ -2,11 +2,14 @@ package db
 
 import (
 	bolt "go.etcd.io/bbolt"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // DB holder for DB junk
 type DB struct {
-	db *bolt.DB
+	db   *bolt.DB
+	gorm *gorm.DB
 }
 
 // Upsert insert or update based on key and bucket
@@ -105,5 +108,12 @@ func NewDB() (*DB, error) {
 		return nil, err
 	}
 
-	return &DB{db: db}, nil
+	gormdb, err := gorm.Open(sqlite.Open("sqlite.db"), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	if err := gormdb.AutoMigrate(&OAuthAccount{}); err != nil {
+		return nil, err
+	}
+	return &DB{db: db, gorm: gormdb}, nil
 }
