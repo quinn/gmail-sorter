@@ -1,0 +1,16 @@
+package pages
+
+import "github.com/quinn/gmail-sorter/internal/web/views/ui"
+
+templ ProviderSelect() {
+	@ui.Layout(nil) {
+		<h2>Choose an Account Provider</h2>
+		<ul class="provider-list">
+			<li>
+				<a href="/oauth/google/start" class="btn btn-primary">Google</a>
+				<a href="/oauth/todoist/start" class="btn btn-primary">Todoist</a>
+			</li>
+			<!-- Add more providers here if supported -->
+		</ul>
+	}
+}

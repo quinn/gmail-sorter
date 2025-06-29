@@ -48,7 +48,7 @@ func Accounts(accounts []db.OAuthAccount) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h2>OAuth Accounts</h2><a href=\"/oauth/google/start\" class=\"btn\">Add Google Account</a><table><thead><tr><th>ID</th><th>Provider</th><th>Email</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h2>OAuth Accounts</h2><a href=\"/accounts/new\" class=\"btn btn-primary\">Add Account</a><table><thead><tr><th>ID</th><th>Provider</th><th>Email</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead> <tbody>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

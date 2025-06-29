@@ -10,7 +10,7 @@ import (
 templ Accounts(accounts []db.OAuthAccount) {
 	@ui.Layout(nil) {
 		<h2>OAuth Accounts</h2>
-		<a href="/oauth/google/start" class="btn">Add Google Account</a>
+		<a href="/accounts/new" class="btn btn-primary">Add Account</a>
 		<table>
 			<thead>
 				<tr>

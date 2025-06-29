@@ -6,3 +6,4 @@ qshan-bolt.db
 /tmp
 oauth_credentials.json
 external
+sqlite.db
