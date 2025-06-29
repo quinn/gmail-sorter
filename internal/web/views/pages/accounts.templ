@@ -1,44 +1,33 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 	"github.com/quinn/gmail-sorter/pkg/db"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"time"
 )
 
 templ Accounts(accounts []db.OAuthAccount) {
 	@ui.Layout(nil) {
-		<h2>OAuth Accounts</h2>
-		<a href="/accounts/new" class="btn btn-primary">Add Account</a>
-		<table>
-			<thead>
-				<tr>
-					<th>ID</th>
-					<th>Provider</th>
-					<th>Email</th>
-					<th>Created</th>
-					<th>Updated</th>
-					<th>Actions</th>
-				</tr>
-			</thead>
-			<tbody>
-				for _, acct := range accounts {
-					<tr>
-						<td>{ acct.ID }</td>
-						<td>{ acct.Provider }</td>
-						<td>{ acct.Email }</td>
-						<td>{ time.Unix(acct.CreatedAt, 0).Format("2006-01-02 15:04") }</td>
-						<td>{ time.Unix(acct.UpdatedAt, 0).Format("2006-01-02 15:04") }</td>
-						<td>
-							<form method="POST" action={ templ.URL("/accounts/" + fmt.Sprint(acct.ID)) } onsubmit="return confirm('Delete this account?');">
-								<input type="hidden" name="_method" value="DELETE" />
-								<button type="submit" class="btn btn-danger">Delete</button>
-							</form>
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
+		<h2 class="mb-4 text-2xl font-bold">OAuth Accounts</h2>
+		<a href="/accounts/new" class="btn btn-primary mb-6">Add Account</a>
+		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+			for _, acct := range accounts {
+				<div class="card flex flex-col justify-between">
+					<div>
+						<div class="text-sm text-gray-500 mb-1">{ cases.Title(language.English).String(acct.Provider) }</div>
+						<div class="font-mono font-semibold text-base mb-1">{ acct.Email }</div>
+						if acct.Label != "" {
+							<div class="badge bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs inline-block mb-2">{ acct.Label }</div>
+						}
+					</div>
+					<div class="flex justify-between items-center mt-2">
+						<span class="text-xs text-gray-400">Added: { time.Unix(acct.CreatedAt, 0).Format("2006-01-02") }</span>
+						<!-- Minimal actions: add edit (label) if desired -->
+					</div>
+				</div>
+			}
+		</div>
 	}
 }
