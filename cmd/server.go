@@ -5,7 +5,6 @@ import (
 
 	"github.com/quinn/gmail-sorter/internal/web"
 	"github.com/quinn/gmail-sorter/pkg/db"
-	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"github.com/spf13/cobra"
 )
 
@@ -20,12 +19,7 @@ var serverCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		api, err := gmailapi.Start(db)
-		if err != nil {
-			return err
-		}
-
-		server, err := web.NewServer(api)
+		server, err := web.NewServer(db)
 		if err != nil {
 			return err
 		}

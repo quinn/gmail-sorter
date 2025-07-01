@@ -36,7 +36,7 @@ to quickly create a Cobra application.`,
 			_ = db.Close()
 		}()
 
-		api, err := gmailapi.Start(db)
+		api, err := gmailapi.Start(db, nil)
 		if err != nil {
 			return err
 		}

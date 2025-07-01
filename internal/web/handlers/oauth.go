@@ -91,8 +91,7 @@ func Accounts(c echo.Context) error {
 	if dbConn == nil {
 		return c.String(http.StatusInternalServerError, "failed to get db from context")
 	}
-	var accounts []db.OAuthAccount
-	err := dbConn.Find(&accounts).Error
+	accounts, err := dbConn.ListOAuthAccounts()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "failed to list accounts")
 	}
@@ -111,7 +110,7 @@ func CreateAccount(c echo.Context) error {
 	}
 	acct.CreatedAt = time.Now().Unix()
 	acct.UpdatedAt = time.Now().Unix()
-	if err := dbConn.Create(&acct).Error; err != nil {
+	if err := dbConn.CreateOAuthAccount(&acct); err != nil {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")

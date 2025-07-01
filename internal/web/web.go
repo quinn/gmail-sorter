@@ -13,14 +13,14 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/gmailapi"
+	"github.com/quinn/gmail-sorter/pkg/db"
 	"go.quinn.io/ccf/assets"
 )
 
 //go:embed public
 var assetsFS embed.FS
 
-func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
+func NewServer(db *db.DB) (*echo.Echo, error) {
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
 
@@ -32,11 +32,6 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 		assetsFS,              // embedded FS
 		os.Getenv("USE_EMBEDDED_ASSETS") == "true",
 	)
-
-	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		slog.Error("error", "err", err)
-		c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	}
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		statusCode := http.StatusInternalServerError
@@ -61,9 +56,9 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 		}
 	}
 
-	e.Use(middleware.DB(api.DB))
+	e.Use(middleware.DB(db))
 	e.Use(middleware.Echo)
-	e.Use(middleware.Gmail(api))
+	e.Use(middleware.Gmail(db))
 
 	e.GET("/healthz", handlers.Health)
 	e.GET("/oauth/:provider/start", handlers.OauthStart)
@@ -74,11 +69,6 @@ func NewServer(api *gmailapi.GmailAPI) (*echo.Echo, error) {
 	e.GET("/accounts/:id", handlers.GetAccount)
 	e.PUT("/accounts/:id", handlers.UpdateAccount)
 	e.DELETE("/accounts/:id", handlers.DeleteAccount)
-
-	e.GET("/test", func(c echo.Context) error {
-		c.Response().Header().Set("HX-Trigger", "test-event")
-		return c.Redirect(http.StatusTemporaryRedirect, "/")
-	})
 
 	for _, action := range models.Actions {
 		switch action.Method {

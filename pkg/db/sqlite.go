@@ -8,6 +8,7 @@ type OAuthAccount struct {
 	Email     string `gorm:"index"`
 	TokenJSON string // serialized oauth2.Token
 	Label     string // user-editable label (e.g. "Work", "Personal")
+	Index     int    // index of account in gmail
 	CreatedAt int64  // unix timestamp
 	UpdatedAt int64
 }
@@ -33,7 +34,7 @@ func (d *DB) UpsertOAuthAccount(acct *OAuthAccount) error {
 	if err == nil {
 		acct.ID = existing.ID
 		return d.gorm.Save(acct).Error
-	} else if err.Error() == "record not found" || err == gorm.ErrRecordNotFound {
+	} else if err == gorm.ErrRecordNotFound {
 		return d.gorm.Create(acct).Error
 	} else {
 		return err
@@ -57,4 +58,13 @@ func (d *DB) UpdateOAuthAccount(acct *OAuthAccount) error {
 // DeleteOAuthAccount deletes an OAuthAccount by ID
 func (d *DB) DeleteOAuthAccount(id string) error {
 	return d.gorm.Delete(&OAuthAccount{}, id).Error
+}
+
+// GetOAuthAccountByProvider retrieves an OAuthAccount by provider name
+func (d *DB) GetOAuthAccountByProvider(provider string) (*OAuthAccount, error) {
+	var acct OAuthAccount
+	if err := d.gorm.Where("provider = ?", provider).First(&acct).Error; err != nil {
+		return nil, err
+	}
+	return &acct, nil
 }

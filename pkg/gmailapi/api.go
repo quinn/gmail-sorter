@@ -16,6 +16,7 @@ import (
 type GmailAPI struct {
 	Service  *gmail.Service
 	DB       *db.DB
+	Account  *db.OAuthAccount
 	Messages *[]*gmail.Message
 }
 
@@ -34,16 +35,10 @@ func (g *GmailAPI) Archive(id string) error {
 }
 
 // Start is bullshit
-func Start(dbConn *db.DB) (*GmailAPI, error) {
-	// Use new oauth_credentials.json loader for Google provider
+func Start(dbConn *db.DB, acct *db.OAuthAccount) (*GmailAPI, error) {
 	config, err := models.LoadOauthConfig("google")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load oauth config: %w", err)
-	}
-
-	acct, err := dbConn.GetOAuthAccountByProvider("google")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get oauth account: %w", err)
 	}
 
 	var token oauth2.Token
@@ -58,7 +53,7 @@ func Start(dbConn *db.DB) (*GmailAPI, error) {
 		return nil, fmt.Errorf("failed to retrieve Gmail client: %w", err)
 	}
 
-	a := &GmailAPI{Service: service, DB: dbConn}
+	a := &GmailAPI{Service: service, DB: dbConn, Account: acct}
 	a.RefreshMessages()
 
 	return a, nil

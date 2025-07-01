@@ -71,15 +71,6 @@ func (d *DB) Close() error {
 	return d.db.Close()
 }
 
-// GetOAuthAccountByProvider retrieves an OAuthAccount by provider name
-func (d *DB) GetOAuthAccountByProvider(provider string) (*OAuthAccount, error) {
-	var acct OAuthAccount
-	if err := d.gorm.Where("provider = ?", provider).First(&acct).Error; err != nil {
-		return nil, err
-	}
-	return &acct, nil
-}
-
 // GetAll retrieve all of the objects for the given bucket name
 func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {
 	err = d.db.View(func(tx *bolt.Tx) (err error) {
