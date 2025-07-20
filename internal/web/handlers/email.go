@@ -52,5 +52,5 @@ func email(c echo.Context) error {
 		),
 	}
 
-	return pages.Email(email, actions).Render(c.Request().Context(), c.Response().Writer)
+	return pages.Email(email.View, actions).Render(c.Request().Context(), c.Response().Writer)
 }

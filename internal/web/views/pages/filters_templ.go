@@ -12,11 +12,10 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"google.golang.org/api/gmail/v1"
 )
 
-func Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.ActionLink) templ.Component {
+func Filters(accountID uint, filters []*gmail.Filter, actions []models.ActionLink) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -61,7 +60,7 @@ func Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.A
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Id)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 25, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 24, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -74,7 +73,7 @@ func Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.A
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(util.DescribeFilterCriteria(filter.Criteria))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 26, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 25, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -85,9 +84,9 @@ func Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.A
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(util.DescribeFilterAction(api, filter.Action))
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(util.DescribeFilterAction(accountID, filter.Action))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 27, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/pages/filters.templ`, Line: 26, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {

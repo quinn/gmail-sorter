@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
@@ -34,24 +36,24 @@ func groupEmail(c echo.Context) error {
 
 	actions := []models.ActionLink{
 		GroupByEmailAction.Link(
-			models.WithParams("domain"),
-			models.WithFields(map[string]string{"val": email.FromDomain}),
+			models.WithParams(strconv.Itoa(int(email.AccountID)), "domain"),
+			models.WithFields(map[string]string{"val": email.View.FromDomain}),
 		),
 	}
-	for _, from := range email.From {
+	for _, from := range email.View.From {
 		actions = append(actions,
 			GroupByEmailAction.Link(
-				models.WithParams("from"),
+				models.WithParams(strconv.Itoa(int(email.AccountID)), "from"),
 				models.WithFields(map[string]string{"val": from}),
 			))
 	}
-	for _, to := range email.To {
+	for _, to := range email.View.To {
 		actions = append(actions,
 			GroupByEmailAction.Link(
-				models.WithParams("to"),
+				models.WithParams(strconv.Itoa(int(email.AccountID)), "to"),
 				models.WithFields(map[string]string{"val": to}),
 			))
 	}
 
-	return pages.GroupEmail(email, actions).Render(c.Request().Context(), c.Response().Writer)
+	return pages.GroupEmail(email.View, actions).Render(c.Request().Context(), c.Response().Writer)
 }

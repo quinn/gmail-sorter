@@ -22,7 +22,6 @@ type Spec struct {
 	Delete      []string `yaml:"delete"`
 	Newsletters []string `yaml:"newsletters"`
 	api         *gmail.Service
-	db          *db.DB
 }
 
 // GmailService returns the Gmail API client.
@@ -33,7 +32,7 @@ func (s *Spec) GmailService() *gmail.Service {
 const timeFormat = "Mon Jan 2 15:04:05 -0700 MST 2006"
 
 // NewSpec loads the spec.yaml
-func NewSpec(api *gmail.Service, db *db.DB) (*Spec, error) {
+func NewSpec(api *gmail.Service) (*Spec, error) {
 	log.SetLevel(log.DebugLevel)
 	log.Info("starting new spec")
 
@@ -44,7 +43,6 @@ func NewSpec(api *gmail.Service, db *db.DB) (*Spec, error) {
 
 	spec := &Spec{
 		api: api,
-		db:  db,
 	}
 
 	err = yaml.Unmarshal(bytes, spec)
@@ -113,7 +111,7 @@ func (s *Spec) refreshLabels() error {
 			return err
 		}
 
-		err = s.db.Upsert("labels", label.Id, d)
+		err = db.DB.Upsert("labels", label.Id, d)
 
 		if err != nil {
 			return err
@@ -139,7 +137,7 @@ func (s *Spec) refreshFilters() (err error) {
 		}
 
 		spew.Dump(filter.Id)
-		err = s.db.Upsert("filters", filter.Id, d)
+		err = db.DB.Upsert("filters", filter.Id, d)
 
 		if err != nil {
 			return
@@ -150,7 +148,7 @@ func (s *Spec) refreshFilters() (err error) {
 }
 
 func (s *Spec) findOrCreateLabel(labelName string) (*gmail.Label, error) {
-	labels, err := s.db.GetAll("labels")
+	labels, err := db.DB.GetAll("labels")
 	if err != nil {
 		return nil, fmt.Errorf("failed db getAll labels: %v", err)
 	}
@@ -186,7 +184,7 @@ func (s *Spec) findOrCreateLabel(labelName string) (*gmail.Label, error) {
 		return nil, fmt.Errorf("failed to marshal: %v", err)
 	}
 
-	err = s.db.Upsert("labels", label.Id, d)
+	err = db.DB.Upsert("labels", label.Id, d)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upsert: %v", err)
 	}
@@ -195,7 +193,7 @@ func (s *Spec) findOrCreateLabel(labelName string) (*gmail.Label, error) {
 }
 
 func (s *Spec) findOrCreateFilter(filterSpec *gmail.Filter) (_ *gmail.Filter, err error) {
-	filters, err := s.db.GetAll("filters")
+	filters, err := db.DB.GetAll("filters")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all filters: %v", err)
@@ -242,7 +240,7 @@ func (s *Spec) findOrCreateFilter(filterSpec *gmail.Filter) (_ *gmail.Filter, er
 		return
 	}
 
-	err = s.db.Upsert("filters", filter.Id, d)
+	err = db.DB.Upsert("filters", filter.Id, d)
 
 	if err != nil {
 		return
@@ -354,7 +352,7 @@ func (s *Spec) applyFilter(filterSpec *gmail.Filter, query string, batch gmail.B
 }
 
 func (s *Spec) getTimestamp(name string) (*time.Time, error) {
-	bytes, err := s.db.Get("timestamps", name)
+	bytes, err := db.DB.Get("timestamps", name)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed db get: %v", err)
@@ -376,7 +374,7 @@ func (s *Spec) getTimestamp(name string) (*time.Time, error) {
 func (s *Spec) setTimestamp(name string) (time.Time, error) {
 	now := time.Now()
 	str := now.Format(timeFormat)
-	err := s.db.Upsert("timestamps", name, []byte(str))
+	err := db.DB.Upsert("timestamps", name, []byte(str))
 	if err != nil {
 		return time.Time{}, fmt.Errorf("failed db upsert: %v", err)
 	}

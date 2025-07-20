@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/labstack/echo/v4"
-	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
@@ -17,13 +16,13 @@ func init() {
 var GroupByEmailAction models.Action = models.Action{
 	ID:               "group-by",
 	Method:           "GET",
-	Path:             "/emails/group-by/:type",
+	Path:             "/account/:id/group-by/:type",
 	UnwrappedHandler: groupByEmail,
 	Label:            groupByLabel,
 }
 
 func groupByLabel(link models.ActionLink) string {
-	return "Group By " + link.Params[0]
+	return "Group By " + link.Params[1]
 }
 
 func groupQuery(c echo.Context) (string, error) {
@@ -63,9 +62,11 @@ func groupByEmail(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	api, err := getAPI(c)
+	if err != nil {
+		return err
+	}
 
-	// Fetch emails matching the query using Gmail API
-	api := middleware.GetGmail(c)
 	slog.Info("Fetching emails matching query: ", "query", query)
 	res, err := api.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
 	if err != nil {
@@ -76,18 +77,18 @@ func groupByEmail(c echo.Context) error {
 	for _, m := range res.Messages {
 		fullMsg, err := api.FullMessage(m.Id)
 		if err != nil {
-			continue // skip bad messages
+			return err
 		}
-		email, err := models.FromGmailMessage(fullMsg)
+		res, err := models.FromGmailMessage(fullMsg)
 		if err != nil {
 			return err
 		}
-		groupedEmails = append(groupedEmails, email)
+		groupedEmails = append(groupedEmails, res)
 	}
 
 	actions := []models.ActionLink{
 		GroupByDeleteAction.Link(
-			models.WithParams(groupType),
+			models.WithParams(c.Param("id"), groupType),
 			models.WithFields(map[string]string{"val": val}),
 			models.WithConfirm(),
 		),

@@ -7,7 +7,7 @@ package handlers
 // var GroupBySaveAction models.Action = models.Action{
 // 	ID:               "group-by-save",
 // 	Method:           "GET",
-// 	Path:             "/emails/group-by/:type/save",
+// 	Path:             "/account/:id/group-by/:type/save",
 // 	UnwrappedHandler: groupBySave,
 // 	Label:            groupBySaveLabel,
 // }
@@ -25,7 +25,10 @@ package handlers
 // 	}
 
 // 	// Fetch emails matching the query using Gmail API
-// 	api := middleware.GetGmail(c)
+// 	api, err := getAPI(c)
+// 	if err != nil {
+// 		return err
+// 	}
 // 	slog.Info("Fetching emails matching query: ", "query", query)
 // 	res, err := api.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
 // 	if err != nil {
@@ -36,9 +39,13 @@ package handlers
 // 	for _, m := range res.Messages {
 // 		fullMsg, err := api.FullMessage(m.Id)
 // 		if err != nil {
-// 			continue // skip bad messages
+// 			return err
 // 		}
-// 		groupedEmails = append(groupedEmails, models.FromGmailMessage(fullMsg))
+// 		res, err := models.FromGmailMessage(fullMsg)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		groupedEmails = append(groupedEmails, res)
 // 	}
 
 // 	actions := []models.ActionLink{

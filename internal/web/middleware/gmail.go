@@ -10,9 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-var gmail *gmailapi.GmailAPI
+func Gmail() echo.MiddlewareFunc {
+	var gmail *gmailapi.MessageList
 
-func Gmail(db *db.DB) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if gmail == nil {
@@ -23,15 +23,14 @@ func Gmail(db *db.DB) echo.MiddlewareFunc {
 					return next(c)
 				}
 
-				acct, err := db.GetOAuthAccountByProvider("google")
+				accts, err := db.DB.GetOAuthAccountByProvider("google")
 				if err == gorm.ErrRecordNotFound {
 					return c.Redirect(http.StatusSeeOther, "/accounts")
 				}
 				if err != nil {
 					return err
 				}
-
-				gmail, err = gmailapi.Start(db, acct)
+				gmail, err = gmailapi.New(accts)
 				if err != nil {
 					return err
 				}
@@ -44,8 +43,8 @@ func Gmail(db *db.DB) echo.MiddlewareFunc {
 	}
 }
 
-func GetGmail(c echo.Context) *gmailapi.GmailAPI {
-	val, ok := c.Get("gmail").(*gmailapi.GmailAPI)
+func GetGmail(c echo.Context) *gmailapi.MessageList {
+	val, ok := c.Get("gmail").(*gmailapi.MessageList)
 	if !ok {
 		return nil
 	}

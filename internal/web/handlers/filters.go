@@ -1,10 +1,16 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
+	"github.com/quinn/gmail-sorter/pkg/db"
 )
 
 func init() {
@@ -24,9 +30,24 @@ func filtersLabel(link models.ActionLink) string {
 }
 
 func filters(c echo.Context) error {
-	api := middleware.GetGmail(c)
+	gmail := middleware.GetGmail(c)
 
-	filters, err := api.Filters()
+	idStr := c.QueryParam("id")
+	if idStr == "" {
+		for id, _ := range gmail.API {
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/filters?id=%d", id))
+		}
+		return errors.New("no accounts")
+	}
+
+	idInt, err := strconv.Atoi(idStr)
+	if err != nil {
+		return err
+	}
+
+	accountID := uint(idInt)
+
+	filters, err := db.DB.AllFilters(accountID)
 	if err != nil {
 		return err
 	}
@@ -37,5 +58,5 @@ func filters(c echo.Context) error {
 		FiltersRefreshAction.Link(),
 	}
 
-	return pages.Filters(api, filters, actions).Render(c.Request().Context(), c.Response().Writer)
+	return pages.Filters(accountID, filters, actions).Render(c.Request().Context(), c.Response().Writer)
 }

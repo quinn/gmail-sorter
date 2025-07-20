@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -8,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"google.golang.org/api/gmail/v1"
 )
 
@@ -18,16 +21,53 @@ func init() {
 var GroupByDeleteAction models.Action = models.Action{
 	ID:               "group-by-delete",
 	Method:           "POST",
-	Path:             "/emails/group-by/:type/delete",
+	Path:             "/account/:id/group-by/:type/delete",
 	UnwrappedHandler: groupByDelete,
 	Label:            groupByDeleteLabel,
 }
 
 func groupByDeleteLabel(link models.ActionLink) string {
-	return "Delete By \"" + link.Params[0] + "\": " + link.Fields["val"]
+	return "Delete By \"" + link.Params[1] + "\": " + link.Fields["val"]
+}
+
+func getID(c echo.Context) (uint, error) {
+	idStr := c.Param("id")
+	var accountID uint
+	if idStr == "" {
+		return 0, errors.New("missing account id")
+	}
+
+	if idInt, err := strconv.Atoi(idStr); err != nil {
+		return 0, err
+	} else {
+		accountID = uint(idInt)
+	}
+
+	return accountID, nil
+}
+
+func getAPI(c echo.Context) (*gmailapi.GmailAPI, error) {
+	gm := middleware.GetGmail(c)
+	accountID, err := getID(c)
+	if err != nil {
+		return nil, err
+	}
+
+	api, ok := gm.API[accountID]
+	if !ok {
+		return nil, fmt.Errorf("account API %d not found", accountID)
+	}
+
+	return api, nil
 }
 
 func groupByDelete(c echo.Context) error {
+	gm := middleware.GetGmail(c)
+	accountID, err := getID(c)
+	if err != nil {
+		return err
+	}
+
 	query, err := groupQuery(c)
 	if err != nil {
 		return err
@@ -38,8 +78,7 @@ func groupByDelete(c echo.Context) error {
 		AddLabelIds:    []string{"TRASH"},
 	}
 
-	api := middleware.GetGmail(c)
-	count, err := api.ApplyBatch(query, &batch)
+	count, err := gm.ApplyBatch(accountID, query, &batch)
 	if err != nil {
 		return err
 	}

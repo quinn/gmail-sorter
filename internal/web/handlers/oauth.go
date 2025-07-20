@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/option"
 
-	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/pkg/db"
@@ -37,7 +37,7 @@ func OauthCallback(c echo.Context) error {
 	}
 	code := c.QueryParam("code")
 	if code == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Missing code param")
+		return fmt.Errorf("missing code param")
 	}
 	tok, err := config.Exchange(context.Background(), code)
 	if err != nil {
@@ -49,10 +49,6 @@ func OauthCallback(c echo.Context) error {
 		return fmt.Errorf("failed to get email: %w", err)
 	}
 
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return fmt.Errorf("failed to get db from context")
-	}
 	tokenJSON, err := json.Marshal(tok)
 	if err != nil {
 		return fmt.Errorf("failed to marshal token: %w", err)
@@ -65,7 +61,7 @@ func OauthCallback(c echo.Context) error {
 		UpdatedAt: time.Now().Unix(),
 	}
 	// Upsert (replace if exists)
-	if err := dbConn.UpsertOAuthAccount(&acct); err != nil {
+	if err := db.DB.UpsertOAuthAccount(&acct); err != nil {
 		return fmt.Errorf("db error: %w", err)
 	}
 	return c.Redirect(http.StatusFound, "/accounts")
@@ -74,7 +70,7 @@ func OauthCallback(c echo.Context) error {
 // getEmailFromToken fetches the user's email using the token and config
 func getEmailFromToken(config *oauth2.Config, token *oauth2.Token) (string, error) {
 	client := config.Client(context.Background(), token)
-	service, err := gmail.New(client)
+	service, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		return "", err
 	}
@@ -87,30 +83,22 @@ func getEmailFromToken(config *oauth2.Config, token *oauth2.Token) (string, erro
 
 // Accounts lists all OAuth accounts
 func Accounts(c echo.Context) error {
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return c.String(http.StatusInternalServerError, "failed to get db from context")
-	}
-	accounts, err := dbConn.ListOAuthAccounts()
+	accounts, err := db.DB.ListOAuthAccounts()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "failed to list accounts")
+		return err
 	}
 	return pages.Accounts(accounts).Render(c.Request().Context(), c.Response().Writer)
 }
 
 // CreateAccount handles POST /accounts
 func CreateAccount(c echo.Context) error {
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return fmt.Errorf("failed to get db from context")
-	}
 	var acct db.OAuthAccount
 	if err := c.Bind(&acct); err != nil {
 		return err
 	}
 	acct.CreatedAt = time.Now().Unix()
 	acct.UpdatedAt = time.Now().Unix()
-	if err := dbConn.CreateOAuthAccount(&acct); err != nil {
+	if err := db.DB.CreateOAuthAccount(&acct); err != nil {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")
@@ -118,12 +106,8 @@ func CreateAccount(c echo.Context) error {
 
 // GetAccount handles GET /accounts/:id
 func GetAccount(c echo.Context) error {
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return fmt.Errorf("failed to get db from context")
-	}
 	id := c.Param("id")
-	acct, err := dbConn.GetOAuthAccountByID(id)
+	acct, err := db.DB.GetOAuthAccountByID(id)
 	if err != nil {
 		return err
 	}
@@ -132,12 +116,8 @@ func GetAccount(c echo.Context) error {
 
 // UpdateAccount handles PUT /accounts/:id
 func UpdateAccount(c echo.Context) error {
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return fmt.Errorf("failed to get db from context")
-	}
 	id := c.Param("id")
-	acct, err := dbConn.GetOAuthAccountByID(id)
+	acct, err := db.DB.GetOAuthAccountByID(id)
 	if err != nil {
 		return err
 	}
@@ -145,7 +125,7 @@ func UpdateAccount(c echo.Context) error {
 		return err
 	}
 	acct.UpdatedAt = time.Now().Unix()
-	if err := dbConn.UpdateOAuthAccount(acct); err != nil {
+	if err := db.DB.UpdateOAuthAccount(acct); err != nil {
 		return fmt.Errorf("failed to update account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")
@@ -153,12 +133,8 @@ func UpdateAccount(c echo.Context) error {
 
 // DeleteAccount handles DELETE /accounts/:id
 func DeleteAccount(c echo.Context) error {
-	dbConn := middleware.GetDB(c)
-	if dbConn == nil {
-		return fmt.Errorf("failed to get db from context")
-	}
 	id := c.Param("id")
-	if err := dbConn.DeleteOAuthAccount(id); err != nil {
+	if err := db.DB.DeleteOAuthAccount(id); err != nil {
 		return fmt.Errorf("failed to delete account: %w", err)
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")

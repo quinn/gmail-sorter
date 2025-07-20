@@ -13,14 +13,13 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/db"
 	"go.quinn.io/ccf/assets"
 )
 
 //go:embed public
 var assetsFS embed.FS
 
-func NewServer(db *db.DB) (*echo.Echo, error) {
+func NewServer() (*echo.Echo, error) {
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
 
@@ -56,9 +55,9 @@ func NewServer(db *db.DB) (*echo.Echo, error) {
 		}
 	}
 
-	e.Use(middleware.DB(db))
 	e.Use(middleware.Echo)
-	e.Use(middleware.Gmail(db))
+	e.Use(middleware.Gmail())
+	e.Use(middleware.Messages())
 
 	e.GET("/healthz", handlers.Health)
 	e.GET("/oauth/:provider/start", handlers.OauthStart)

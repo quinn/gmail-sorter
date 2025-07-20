@@ -3,7 +3,7 @@ package util
 import (
 	"strings"
 
-	"github.com/quinn/gmail-sorter/pkg/gmailapi"
+	"github.com/quinn/gmail-sorter/pkg/db"
 	"google.golang.org/api/gmail/v1"
 )
 
@@ -29,18 +29,18 @@ func DescribeFilterCriteria(criteria *gmail.FilterCriteria) string {
 	return strings.Join(result, ", ")
 }
 
-func DescribeFilterAction(api *gmailapi.GmailAPI, action *gmail.FilterAction) string {
+func DescribeFilterAction(accountID uint, action *gmail.FilterAction) string {
 	var result []string
 
 	if len(action.AddLabelIds) > 0 {
 		for _, id := range action.AddLabelIds {
-			result = append(result, "add label: "+GetLabel(api, id))
+			result = append(result, "add label: "+getLabel(accountID, id))
 		}
 	}
 
 	if len(action.RemoveLabelIds) > 0 {
 		for _, id := range action.RemoveLabelIds {
-			result = append(result, "remove label: "+GetLabel(api, id))
+			result = append(result, "remove label: "+getLabel(accountID, id))
 		}
 	}
 
@@ -51,8 +51,8 @@ func DescribeFilterAction(api *gmailapi.GmailAPI, action *gmail.FilterAction) st
 	return strings.Join(result, ", ")
 }
 
-func GetLabel(api *gmailapi.GmailAPI, id string) string {
-	label, err := api.Label(id)
+func getLabel(accountID uint, id string) string {
+	label, err := db.DB.Label(accountID, id)
 
 	if err != nil {
 		return "N/A"

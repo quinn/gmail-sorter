@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/labstack/echo/v4"
-	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
@@ -15,7 +14,7 @@ import (
 var GroupBySaveFilterAction = models.Action{
 	ID:               "group-by-save-filter",
 	Method:           "POST",
-	Path:             "/emails/group-by/:type/save-filter",
+	Path:             "/account/:id/group-by/:type/save-filter",
 	UnwrappedHandler: groupBySaveFilter,
 	Label:            groupBySaveFilterLabel,
 }
@@ -31,11 +30,13 @@ func groupBySaveFilterLabel(link models.ActionLink) string {
 func groupBySaveFilter(c echo.Context) error {
 	groupType := c.Param("type")
 	val := c.FormValue("val")
-	api := middleware.GetGmail(c)
+	api, err := getAPI(c)
+	if err != nil {
+		return err
+	}
 
 	// This is where Gmail filter creation logic should go
-	err := api.CreateFilterForGroupDelete(groupType, val)
-	if err != nil {
+	if err := api.CreateFilterForGroupDelete(groupType, val); err != nil {
 		return fmt.Errorf("failed to create gmail filter: %w", err)
 	}
 

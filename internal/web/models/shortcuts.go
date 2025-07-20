@@ -9,7 +9,7 @@ var keysmaps = map[string]map[string][]rune{
 	},
 	"dvorak": {
 		"left":  []rune{'a', 'o', 'e', 'u', ' ', ',', '.', 'p'},
-		"right": []rune{'h', 't', 'n', 's', 'g', 'c', 'r', 'l'},
+		"right": []rune{'h', 't', 'n', 's', 'g', 'c', 'v', 'l'},
 	},
 }
 

@@ -14,12 +14,12 @@ type OAuthAccount struct {
 }
 
 // CreateOAuthAccount inserts a new OAuthAccount
-func (d *DB) CreateOAuthAccount(acct *OAuthAccount) error {
+func (d *db) CreateOAuthAccount(acct *OAuthAccount) error {
 	return d.gorm.Create(acct).Error
 }
 
 // GetOAuthAccountByID retrieves an OAuthAccount by ID
-func (d *DB) GetOAuthAccountByID(id string) (*OAuthAccount, error) {
+func (d *db) GetOAuthAccountByID(id string) (*OAuthAccount, error) {
 	var acct OAuthAccount
 	if err := d.gorm.First(&acct, id).Error; err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (d *DB) GetOAuthAccountByID(id string) (*OAuthAccount, error) {
 }
 
 // UpsertOAuthAccount inserts or updates an OAuthAccount by provider and email
-func (d *DB) UpsertOAuthAccount(acct *OAuthAccount) error {
+func (d *db) UpsertOAuthAccount(acct *OAuthAccount) error {
 	var existing OAuthAccount
 	err := d.gorm.Where("provider = ? AND email = ?", acct.Provider, acct.Email).First(&existing).Error
 	if err == nil {
@@ -42,7 +42,7 @@ func (d *DB) UpsertOAuthAccount(acct *OAuthAccount) error {
 }
 
 // ListOAuthAccounts returns all OAuthAccounts
-func (d *DB) ListOAuthAccounts() ([]OAuthAccount, error) {
+func (d *db) ListOAuthAccounts() ([]OAuthAccount, error) {
 	var accounts []OAuthAccount
 	if err := d.gorm.Find(&accounts).Error; err != nil {
 		return nil, err
@@ -51,20 +51,20 @@ func (d *DB) ListOAuthAccounts() ([]OAuthAccount, error) {
 }
 
 // UpdateOAuthAccount updates an existing OAuthAccount
-func (d *DB) UpdateOAuthAccount(acct *OAuthAccount) error {
+func (d *db) UpdateOAuthAccount(acct *OAuthAccount) error {
 	return d.gorm.Save(acct).Error
 }
 
 // DeleteOAuthAccount deletes an OAuthAccount by ID
-func (d *DB) DeleteOAuthAccount(id string) error {
+func (d *db) DeleteOAuthAccount(id string) error {
 	return d.gorm.Delete(&OAuthAccount{}, id).Error
 }
 
 // GetOAuthAccountByProvider retrieves an OAuthAccount by provider name
-func (d *DB) GetOAuthAccountByProvider(provider string) (*OAuthAccount, error) {
-	var acct OAuthAccount
-	if err := d.gorm.Where("provider = ?", provider).First(&acct).Error; err != nil {
+func (d *db) GetOAuthAccountByProvider(provider string) ([]OAuthAccount, error) {
+	var acct []OAuthAccount
+	if err := d.gorm.Where("provider = ?", provider).Find(&acct).Error; err != nil {
 		return nil, err
 	}
-	return &acct, nil
+	return acct, nil
 }

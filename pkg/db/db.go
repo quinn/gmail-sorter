@@ -1,19 +1,46 @@
 package db
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"strconv"
+
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/api/gmail/v1"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 // DB holder for DB junk
-type DB struct {
+type db struct {
 	db   *bolt.DB
 	gorm *gorm.DB
 }
 
+var DB *db
+
+func init() {
+	path := "./bolt.db"
+	d, err := bolt.Open(path, 0666, nil)
+	if err != nil {
+		log.Fatalf("failed to open boltdb: %v", err)
+	}
+
+	gormdb, err := gorm.Open(sqlite.Open("sqlite.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to open sqlite db: %v", err)
+	}
+
+	if err := gormdb.AutoMigrate(&OAuthAccount{}); err != nil {
+		log.Fatalf("failed to migrate: %v", err)
+	}
+
+	DB = &db{db: d, gorm: gormdb}
+}
+
 // Upsert insert or update based on key and bucket
-func (d *DB) Upsert(bucket string, key string, value []byte) error {
+func (d *db) Upsert(bucket string, key string, value []byte) error {
 	return d.db.Update(func(tx *bolt.Tx) (err error) {
 		b, err := d.bucket(tx, bucket)
 
@@ -31,7 +58,7 @@ func (d *DB) Upsert(bucket string, key string, value []byte) error {
 	})
 }
 
-func (d *DB) bucket(tx *bolt.Tx, bucket string) (b *bolt.Bucket, err error) {
+func (d *db) bucket(tx *bolt.Tx, bucket string) (b *bolt.Bucket, err error) {
 	b = tx.Bucket([]byte(bucket))
 
 	if b == nil {
@@ -46,7 +73,7 @@ func (d *DB) bucket(tx *bolt.Tx, bucket string) (b *bolt.Bucket, err error) {
 }
 
 // Get a key from a bucket
-func (d *DB) Get(bucket string, key string) (bytes []byte, err error) {
+func (d *db) Get(bucket string, key string) (bytes []byte, err error) {
 	err = d.db.Update(func(tx *bolt.Tx) (err error) {
 		b, err := d.bucket(tx, bucket)
 
@@ -67,12 +94,12 @@ func (d *DB) Get(bucket string, key string) (bytes []byte, err error) {
 }
 
 // Close closes boltdb
-func (d *DB) Close() error {
+func (d *db) Close() error {
 	return d.db.Close()
 }
 
 // GetAll retrieve all of the objects for the given bucket name
-func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {
+func (d *db) GetAll(bucket string) (objects [][]byte, err error) {
 	err = d.db.View(func(tx *bolt.Tx) (err error) {
 		b, err := d.bucket(tx, bucket)
 
@@ -99,23 +126,113 @@ func (d *DB) GetAll(bucket string) (objects [][]byte, err error) {
 	return
 }
 
-// NewDB inits it
-func NewDB() (*DB, error) {
-	path := "./bolt.db"
-	db, err := bolt.Open(path, 0666, nil)
+func (db *db) filterKey(accountID uint) string {
+	return "filters-" + strconv.FormatUint(uint64(accountID), 10)
+}
+
+func (db *db) labelKey(accountID uint) string {
+	return "labels-" + strconv.FormatUint(uint64(accountID), 10)
+}
+
+func (db *db) Filters(accountID uint) ([]*gmail.Filter, error) {
+	filters, err := db.GetAll(db.filterKey(accountID))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all filters: %w", err)
+	}
+
+	var result []*gmail.Filter
+
+	for _, bytes := range filters {
+		var filter gmail.Filter
+		if err := json.Unmarshal(bytes, &filter); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal filter: %w", err)
+		}
+
+		result = append(result, &filter)
+	}
+
+	return result, nil
+}
+
+func (db *db) Label(accountID uint, id string) (*gmail.Label, error) {
+	bytes, err := db.Get(db.labelKey(accountID), id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	gormdb, err := gorm.Open(sqlite.Open("sqlite.db"), &gorm.Config{})
+	if bytes == nil {
+		return nil, fmt.Errorf("label %s not found", id)
+	}
+
+	var label gmail.Label
+	if err = json.Unmarshal(bytes, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (db *db) UpsertFilters(accountID uint, filters []*gmail.Filter) error {
+	for _, filter := range filters {
+		d, err := json.Marshal(filter)
+		if err != nil {
+			return err
+		}
+
+		if err := db.Upsert(db.filterKey(accountID), filter.Id, d); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (db *db) UpsertLabels(accountID uint, labels []*gmail.Label) error {
+	for _, label := range labels {
+		d, err := json.Marshal(label)
+		if err != nil {
+			return err
+		}
+
+		if err := db.Upsert(db.labelKey(accountID), label.Id, d); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (db *db) AllFilters(accountID uint) ([]*gmail.Filter, error) {
+	filters, err := db.GetAll(db.filterKey(accountID))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get all filters: %w", err)
 	}
 
-	if err := gormdb.AutoMigrate(&OAuthAccount{}); err != nil {
-		return nil, err
+	var result []*gmail.Filter
+
+	for _, bytes := range filters {
+		var filter gmail.Filter
+		if err := json.Unmarshal(bytes, &filter); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal filter: %w", err)
+		}
+
+		result = append(result, &filter)
 	}
 
-	return &DB{db: db, gorm: gormdb}, nil
+	return result, nil
+}
+
+func (db *db) UpsertFilter(accountID uint, filter *gmail.Filter) error {
+	d, err := json.Marshal(filter)
+	if err != nil {
+		return fmt.Errorf("failed to marshal: %w", err)
+	}
+
+	if err := db.Upsert(db.filterKey(accountID), filter.Id, d); err != nil {
+		return fmt.Errorf("failed to upsert: %w", err)
+	}
+
+	return nil
 }

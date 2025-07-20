@@ -7,7 +7,6 @@ import (
 	"log/slog"
 
 	"github.com/quinn/gmail-sorter/pkg/core"
-	"github.com/quinn/gmail-sorter/pkg/db"
 	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"github.com/spf13/cobra"
 )
@@ -25,23 +24,12 @@ to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		slog.Info("apply called")
 
-		var err error
-		db, err := db.NewDB()
-		if err != nil {
-			return err
-		}
-		slog.Info("connected to database")
-		defer func() {
-			slog.Info("closing database")
-			_ = db.Close()
-		}()
-
-		api, err := gmailapi.Start(db, nil)
+		api, err := gmailapi.Start(nil)
 		if err != nil {
 			return err
 		}
 
-		spec, err := core.NewSpec(api.Service, db)
+		spec, err := core.NewSpec(api.Service)
 
 		if err != nil {
 			return err

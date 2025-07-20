@@ -4,11 +4,10 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
-	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"google.golang.org/api/gmail/v1"
 )
 
-templ Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.ActionLink) {
+templ Filters(accountID uint, filters []*gmail.Filter, actions []models.ActionLink) {
 	@ui.Layout(actions) {
 		<h2>Filters</h2>
 		<table>
@@ -24,7 +23,7 @@ templ Filters(api *gmailapi.GmailAPI, filters []*gmail.Filter, actions []models.
 					<tr>
 						<td>{ filter.Id }</td>
 						<td>{ util.DescribeFilterCriteria(filter.Criteria) }</td>
-						<td>{ util.DescribeFilterAction(api, filter.Action) }</td>
+						<td>{ util.DescribeFilterAction(accountID, filter.Action) }</td>
 					</tr>
 				}
 			</tbody>

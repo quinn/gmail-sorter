@@ -35,11 +35,17 @@ func emailCommand(c echo.Context) error {
 	case "skip":
 		api.Skip(id)
 	case "delete":
+		panic("testing")
 		err = api.Delete(id)
 	case "archive":
+		panic("testing")
 		err = api.Archive(id)
 	case "open":
-		return htmx.Redirect(c, fmt.Sprintf("https://mail.google.com/mail/u/%d/#inbox/%s", api.Account.Index, id))
+		url, err := api.OpenURL(id)
+		if err != nil {
+			return err
+		}
+		return htmx.Redirect(c, url)
 	case "todo":
 		return c.String(http.StatusNotImplemented, "TODO: Move email to Todoist (not yet implemented)")
 	default:
