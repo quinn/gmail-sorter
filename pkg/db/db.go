@@ -58,18 +58,18 @@ func (d *db) Upsert(bucket string, key string, value []byte) error {
 	})
 }
 
-func (d *db) bucket(tx *bolt.Tx, bucket string) (b *bolt.Bucket, err error) {
-	b = tx.Bucket([]byte(bucket))
-
-	if b == nil {
-		b, err = tx.CreateBucket([]byte(bucket))
+func (d *db) bucket(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
+	b := tx.Bucket([]byte(bucket))
+	if b != nil {
+		return b, nil
 	}
 
+	b, err := tx.CreateBucket([]byte(bucket))
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to create bucket: %w", err)
 	}
 
-	return
+	return b, nil
 }
 
 // Get a key from a bucket
@@ -100,30 +100,30 @@ func (d *db) Close() error {
 
 // GetAll retrieve all of the objects for the given bucket name
 func (d *db) GetAll(bucket string) (objects [][]byte, err error) {
-	err = d.db.View(func(tx *bolt.Tx) (err error) {
+	err = d.db.Update(func(tx *bolt.Tx) (err error) {
 		b, err := d.bucket(tx, bucket)
 
 		if err != nil {
-			return
+			return err
 		}
 
 		err = b.ForEach(func(k []byte, v []byte) (err error) {
 			objects = append(objects, v)
-			return
+			return nil
 		})
 
 		if err != nil {
-			return
+			return err
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return
+	return objects, nil
 }
 
 func (db *db) filterKey(accountID uint) string {

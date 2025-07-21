@@ -14,9 +14,9 @@ import (
 )
 
 type GmailAPI struct {
-	Service     *gmail.Service
-	Account     *db.OAuthAccount
-	MessageList *MessageList
+	Service *gmail.Service
+	Account *db.OAuthAccount
+	// MessageList *MessageList
 }
 
 func (g *GmailAPI) Archive(id string) error {
@@ -27,8 +27,6 @@ func (g *GmailAPI) Archive(id string) error {
 	if err := g.Modify(id, moveToArchive); err != nil {
 		return err
 	}
-
-	g.MessageList.Skip(id)
 
 	return nil
 }
@@ -62,7 +60,16 @@ func (g *GmailAPI) RefreshMessages() ([]*gmail.Message, error) {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
 
-	return listRes.Messages, nil
+	var messages []*gmail.Message
+	for _, msg := range listRes.Messages {
+		fullMsg, err := g.FullMessage(msg.Id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get email: %w", err)
+		}
+		messages = append(messages, fullMsg)
+	}
+
+	return messages, nil
 }
 
 // CreateFilterForGroupDelete creates a Gmail filter for the specified group type and value.
@@ -141,6 +148,10 @@ func (g *GmailAPI) ApplyBatch(query string, batch *gmail.BatchModifyMessagesRequ
 		ids = append(ids, message.Id)
 	}
 
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	batch.Ids = ids
 
 	if err = g.Service.Users.Messages.BatchModify("me", batch).Do(); err != nil {
@@ -175,7 +186,7 @@ func (g *GmailAPI) Query(query string) (*gmail.ListMessagesResponse, error) {
 func (g *GmailAPI) findOrCreateFilter(filterSpec *gmail.Filter) error {
 	filters, err := db.DB.AllFilters(g.Account.ID)
 	if err != nil {
-		return fmt.Errorf("failed to get all filters: %w", err)
+		return err
 	}
 
 	for _, filter := range filters {

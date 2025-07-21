@@ -35,10 +35,8 @@ func emailCommand(c echo.Context) error {
 	case "skip":
 		api.Skip(id)
 	case "delete":
-		panic("testing")
 		err = api.Delete(id)
 	case "archive":
-		panic("testing")
 		err = api.Archive(id)
 	case "open":
 		url, err := api.OpenURL(id)

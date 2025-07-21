@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/util"
 	"go.quinn.io/ccf/assets"
 )
 
@@ -42,10 +43,6 @@ templ Layout(links []models.ActionLink) {
 					{{
 						action := link.Action()
 						shortcut := string(shortcuts[i])
-						var params []interface{}
-						for _, param := range link.Params {
-							params = append(params, param)
-						}
 					}}
 					<form
 						class="grow"
@@ -53,7 +50,7 @@ templ Layout(links []models.ActionLink) {
 							action="/confirm"
 							method="GET"
 						} else {
-							action={ templ.URL(c.Echo().Reverse(action.ID, params...)) }
+							action={ util.LinkFormAction(c, link) }
 							method={ action.Method }
 						}
 						hx-trigger={ "click, keyup[key=='" + shortcut + "'] from:body" }

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/util"
 	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"google.golang.org/api/gmail/v1"
 )
@@ -83,9 +83,15 @@ func groupByDelete(c echo.Context) error {
 		return err
 	}
 
-	u := "/emails/group-by/" + c.Param("type") + "/delete/success"
-	u += "?val=" + url.QueryEscape(c.FormValue("val"))
-	u += "&count=" + strconv.Itoa(count)
+	link := GroupByDeleteSuccessAction.Link(
+		models.WithParams(c.Param("id"), c.Param("type")),
+		models.WithFields(map[string]string{"val": c.FormValue("val"), "count": strconv.Itoa(count)}),
+	)
+
+	u, err := util.LinkURL(c, link)
+	if err != nil {
+		return err
+	}
 
 	return c.Redirect(http.StatusSeeOther, u)
 }

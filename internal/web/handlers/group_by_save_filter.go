@@ -35,7 +35,6 @@ func groupBySaveFilter(c echo.Context) error {
 		return err
 	}
 
-	// This is where Gmail filter creation logic should go
 	if err := api.CreateFilterForGroupDelete(groupType, val); err != nil {
 		return fmt.Errorf("failed to create gmail filter: %w", err)
 	}

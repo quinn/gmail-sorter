@@ -3,7 +3,7 @@ package gmailapi
 import (
 	"fmt"
 	"log/slog"
-	"sort"
+	"slices"
 
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/pkg/db"
@@ -19,6 +19,7 @@ type Message struct {
 func New(accounts []db.OAuthAccount) (*MessageList, error) {
 	var ml MessageList
 	ml.API = make(map[uint]*GmailAPI)
+	ml.Messages = make([]*Message, 0)
 	for _, acct := range accounts {
 		g, err := Start(&acct)
 		if err != nil {
@@ -61,8 +62,11 @@ func (m *MessageList) GetFullMessage(id string) (*Message, error) {
 		}
 		msg.Message = fullMsg
 		m.Messages[idx].Message = fullMsg
+	}
 
-		if msg.View, err = models.FromGmailMessage(fullMsg); err != nil {
+	if msg.View.ID == "" {
+		var err error
+		if msg.View, err = models.FromGmailMessage(msg.Message); err != nil {
 			return nil, fmt.Errorf("failed to convert email: %w", err)
 		}
 	}
@@ -99,25 +103,41 @@ func (m *MessageList) RefreshFilters() error {
 }
 
 func (m *MessageList) Archive(id string) error {
+	var found bool
 	for _, msg := range m.Messages {
 		if msg.Message.Id == id {
-			return m.API[msg.AccountID].Archive(id)
+			found = true
+			if err := m.API[msg.AccountID].Archive(id); err != nil {
+				return err
+			}
 		}
 	}
 
-	return fmt.Errorf("message %s not found", id)
-}
-
-func (m *MessageList) Delete(id string) error {
-	for _, msg := range m.Messages {
-		if msg.Message.Id == id {
-			return m.API[msg.AccountID].Delete(id)
-		}
+	if !found {
+		return fmt.Errorf("message %s not found", id)
 	}
 
 	m.Skip(id)
+	return nil
+}
 
-	return fmt.Errorf("message %s not found", id)
+func (m *MessageList) Delete(id string) error {
+	var found bool
+	for _, msg := range m.Messages {
+		if msg.Message.Id == id {
+			found = true
+			if err := m.API[msg.AccountID].Delete(id); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("message %s not found", id)
+	}
+
+	m.Skip(id)
+	return nil
 }
 
 func (m *MessageList) OpenURL(id string) (string, error) {
@@ -162,20 +182,17 @@ func (m *MessageList) Skip(id string) {
 
 func (m *MessageList) Sort() {
 	// Sort by gmail.Message.InternalDate (descending)
-	sort.SliceStable(m.Messages, func(i, j int) bool {
-		// Defensive: nil checks
-		mi := m.Messages[i].Message
-		mj := m.Messages[j].Message
-		if mi == nil && mj == nil {
-			return false
-		}
-		if mi == nil {
-			return false // nils go last
-		}
-		if mj == nil {
-			return true // nils go last
-		}
+	slices.SortFunc(m.Messages, func(a, b *Message) int {
+		ma := a.Message
+		mb := b.Message
+
 		// InternalDate is int64 (ms since epoch)
-		return mi.InternalDate > mj.InternalDate
+		if ma.InternalDate > mb.InternalDate {
+			return -1
+		}
+		if ma.InternalDate < mb.InternalDate {
+			return 1
+		}
+		return 0
 	})
 }

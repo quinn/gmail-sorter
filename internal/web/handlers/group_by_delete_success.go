@@ -1,35 +1,43 @@
 package handlers
 
-// // GroupByDeleteSuccessAction is the action for the post-delete success screen
-// var GroupByDeleteSuccessAction = models.Action{
-// 	ID:               "group-by-delete-success",
-// 	Method:           "GET",
-// 	Path:             "/account/:id/group-by/:type/delete/success",
-// 	UnwrappedHandler: groupByDeleteSuccess,
-// 	Label:            groupByDeleteSuccessLabel,
-// }
+import (
+	"strconv"
 
-// func init() {
-// 	models.Register(GroupByDeleteSuccessAction)
-// }
+	"github.com/labstack/echo/v4"
+	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/views/pages"
+)
 
-// func groupByDeleteSuccessLabel(link models.ActionLink) string {
-// 	return "Post Delete Success"
-// }
+// GroupByDeleteSuccessAction is the action for the post-delete success screen
+var GroupByDeleteSuccessAction = models.Action{
+	ID:               "group-by-delete-success",
+	Method:           "GET",
+	Path:             "/account/:id/group-by/:type/delete/success",
+	UnwrappedHandler: groupByDeleteSuccess,
+	Label:            groupByDeleteSuccessLabel,
+}
 
-// func groupByDeleteSuccess(c echo.Context) error {
-// 	groupType := c.Param("type")
-// 	val := c.QueryParam("val")
-// 	countStr := c.QueryParam("count")
-// 	count, _ := strconv.Atoi(countStr)
+func init() {
+	models.Register(GroupByDeleteSuccessAction)
+}
 
-// 	actions := []models.ActionLink{
-// 		GroupBySaveFilterAction.Link(
-// 			models.WithParams(c.Param("id"), groupType),
-// 			models.WithFields(map[string]string{"val": val}),
-// 		),
-// 		IndexAction.Link(),
-// 	}
+func groupByDeleteSuccessLabel(link models.ActionLink) string {
+	return "Post Delete Success"
+}
 
-// 	return pages.GroupByDeleteSuccess(actions, groupType, val, count).Render(c.Request().Context(), c.Response().Writer)
-// }
+func groupByDeleteSuccess(c echo.Context) error {
+	groupType := c.Param("type")
+	val := c.QueryParam("val")
+	countStr := c.QueryParam("count")
+	count, _ := strconv.Atoi(countStr)
+
+	actions := []models.ActionLink{
+		GroupBySaveFilterAction.Link(
+			models.WithParams(c.Param("id"), groupType),
+			models.WithFields(map[string]string{"val": val}),
+		),
+		IndexAction.Link(),
+	}
+
+	return pages.GroupByDeleteSuccess(actions, groupType, val, count).Render(c.Request().Context(), c.Response().Writer)
+}

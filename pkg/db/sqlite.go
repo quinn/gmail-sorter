@@ -60,8 +60,8 @@ func (d *db) DeleteOAuthAccount(id string) error {
 	return d.gorm.Delete(&OAuthAccount{}, id).Error
 }
 
-// GetOAuthAccountByProvider retrieves an OAuthAccount by provider name
-func (d *db) GetOAuthAccountByProvider(provider string) ([]OAuthAccount, error) {
+// GetOAuthAccountsByProvider retrieves an OAuthAccount by provider name
+func (d *db) GetOAuthAccountsByProvider(provider string) ([]OAuthAccount, error) {
 	var acct []OAuthAccount
 	if err := d.gorm.Where("provider = ?", provider).Find(&acct).Error; err != nil {
 		return nil, err
