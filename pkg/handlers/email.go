@@ -3,7 +3,6 @@ package handlers
 import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 func init() {
@@ -51,5 +50,5 @@ func email(c models.Context) error {
 		),
 	}
 
-	return pages.Email(email.View, actions).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, email.View)
 }

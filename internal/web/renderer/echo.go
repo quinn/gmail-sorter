@@ -33,6 +33,8 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 	switch data := data.(type) {
 	case models.Open:
 		return htmx.Redirect(c, data.URL)
+	case models.EmailResponse:
+		return pages.Email(data, actions).Render(c.Request().Context(), c.Response().Writer)
 	default:
 		return fmt.Errorf("no renderer found for action ID: %s", current.Action().ID)
 	}
