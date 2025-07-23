@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
@@ -13,23 +10,23 @@ func init() {
 }
 
 var FiltersRefreshAction models.Action = models.Action{
-	ID:               "filters-refresh",
-	Method:           "POST",
-	Path:             "/filters/refresh",
-	UnwrappedHandler: filtersRefresh,
-	Label:            filtersRefreshLabel,
+	ID:      "filters-refresh",
+	Method:  "POST",
+	Path:    "/filters/refresh",
+	Handler: filtersRefresh,
+	Label:   filtersRefreshLabel,
 }
 
 func filtersRefreshLabel(link models.ActionLink) string {
 	return "Refresh Filters"
 }
 
-func filtersRefresh(c echo.Context) error {
+func filtersRefresh(c models.Context) error {
 	api := middleware.GetGmail(c)
 
 	if err := api.RefreshFilters(); err != nil {
 		return err
 	}
 
-	return c.Redirect(http.StatusSeeOther, "/filters")
+	return c.Redirect(FiltersAction.Link())
 }

@@ -32,7 +32,9 @@ func filters(c models.Context) error {
 	idStr := c.QueryParam("id")
 	if idStr == "" {
 		for id := range gmail.API {
-			return c.Redirect(FiltersAction.Link(models.WithParams(fmt.Sprintf("%d", id))))
+			return c.Redirect(FiltersAction.Link(
+				models.WithFields(map[string]string{"id": fmt.Sprintf("%d", id)}),
+			))
 		}
 		return errors.New("no accounts")
 	}
