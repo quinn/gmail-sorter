@@ -43,6 +43,8 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 		return pages.Filters(data.AccountID, data.Filters, actions).Render(c.Request().Context(), c.Response().Writer)
 	case models.GroupByPageData:
 		return pages.GroupBy(data.GroupType, data.Value, data.Emails, actions).Render(c.Request().Context(), c.Response().Writer)
+case models.GroupByDeleteSuccessPageData:
+		return pages.GroupByDeleteSuccess(actions, data.GroupType, data.Value, data.Count).Render(c.Request().Context(), c.Response().Writer)
 	default:
 		return fmt.Errorf("no renderer found for action ID: %s", current.Action().ID)
 	}

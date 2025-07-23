@@ -15,3 +15,10 @@ type GroupByPageData struct {
 	Value     string
 	Emails    []EmailResponse
 }
+
+// GroupByDeleteSuccessPageData is used for rendering the group-by delete success page.
+type GroupByDeleteSuccessPageData struct {
+	GroupType string
+	Value     string
+	Count     int
+}

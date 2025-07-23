@@ -3,18 +3,16 @@ package handlers
 import (
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 // GroupByDeleteSuccessAction is the action for the post-delete success screen
 var GroupByDeleteSuccessAction = models.Action{
-	ID:               "group-by-delete-success",
-	Method:           "GET",
-	Path:             "/account/:id/group-by/:type/delete/success",
-	UnwrappedHandler: groupByDeleteSuccess,
-	Label:            groupByDeleteSuccessLabel,
+	ID:      "group-by-delete-success",
+	Method:  "GET",
+	Path:    "/account/:id/group-by/:type/delete/success",
+	Handler: groupByDeleteSuccess,
+	Label:   groupByDeleteSuccessLabel,
 }
 
 func init() {
@@ -25,7 +23,7 @@ func groupByDeleteSuccessLabel(link models.ActionLink) string {
 	return "Post Delete Success"
 }
 
-func groupByDeleteSuccess(c echo.Context) error {
+func groupByDeleteSuccess(c models.Context) error {
 	groupType := c.Param("type")
 	val := c.QueryParam("val")
 	countStr := c.QueryParam("count")
@@ -39,5 +37,9 @@ func groupByDeleteSuccess(c echo.Context) error {
 		IndexAction.Link(),
 	}
 
-	return pages.GroupByDeleteSuccess(actions, groupType, val, count).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, models.GroupByDeleteSuccessPageData{
+		GroupType: groupType,
+		Value:     val,
+		Count:     count,
+	})
 }

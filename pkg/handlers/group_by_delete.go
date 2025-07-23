@@ -3,12 +3,10 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/util"
 	"github.com/quinn/gmail-sorter/pkg/gmailapi"
 	"google.golang.org/api/gmail/v1"
 )
@@ -18,11 +16,11 @@ func init() {
 }
 
 var GroupByDeleteAction models.Action = models.Action{
-	ID:               "group-by-delete",
-	Method:           "POST",
-	Path:             "/account/:id/group-by/:type/delete",
-	UnwrappedHandler: groupByDelete,
-	Label:            groupByDeleteLabel,
+	ID:      "group-by-delete",
+	Method:  "POST",
+	Path:    "/account/:id/group-by/:type/delete",
+	Handler: groupByDelete,
+	Label:   groupByDeleteLabel,
 }
 
 func groupByDeleteLabel(link models.ActionLink) string {
@@ -87,10 +85,5 @@ func groupByDelete(c models.Context) error {
 		models.WithFields(map[string]string{"val": c.FormValue("val"), "count": strconv.Itoa(count)}),
 	)
 
-	u, err := util.LinkURL(c, link)
-	if err != nil {
-		return err
-	}
-
-	return c.Redirect(http.StatusSeeOther, u)
+	return c.Redirect(link)
 }
