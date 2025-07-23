@@ -30,9 +30,9 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 		return pages.Menu().Render(c.Request().Context(), c.Response().Writer)
 	}
 
-	switch data.(type) {
+	switch data := data.(type) {
 	case models.Open:
-		return htmx.Redirect(c, data.(models.Open).URL)
+		return htmx.Redirect(c, data.URL)
 	default:
 		return fmt.Errorf("no renderer found for action ID: %s", current.Action().ID)
 	}
