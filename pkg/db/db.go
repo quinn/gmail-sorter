@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/api/gmail/v1"
@@ -22,7 +23,9 @@ var DB *db
 
 func init() {
 	path := "./bolt.db"
-	d, err := bolt.Open(path, 0666, nil)
+	d, err := bolt.Open(path, 0666, &bolt.Options{
+		Timeout: 5 * time.Second,
+	})
 	if err != nil {
 		log.Fatalf("failed to open boltdb: %v", err)
 	}

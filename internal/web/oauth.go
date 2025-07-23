@@ -139,3 +139,8 @@ func DeleteAccount(c echo.Context) error {
 	}
 	return c.Redirect(http.StatusSeeOther, "/accounts")
 }
+
+// AccountProviderSelect handles GET /accounts/new
+func AccountProviderSelect(c echo.Context) error {
+	return pages.ProviderSelect().Render(c.Request().Context(), c.Response().Writer)
+}
