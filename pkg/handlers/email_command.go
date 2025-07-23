@@ -2,12 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"go.quinn.io/ccf/htmx"
 )
 
 func init() {
@@ -15,11 +12,11 @@ func init() {
 }
 
 var EmailCommandAction models.Action = models.Action{
-	ID:               "email-command",
-	Method:           "POST",
-	Path:             "/emails/:id/command/:command",
-	UnwrappedHandler: emailCommand,
-	Label:            emailCommandLabel,
+	ID:      "email-command",
+	Method:  "POST",
+	Path:    "/emails/:id/command/:command",
+	Handler: emailCommand,
+	Label:   emailCommandLabel,
 }
 
 func emailCommandLabel(link models.ActionLink) string {
@@ -27,7 +24,7 @@ func emailCommandLabel(link models.ActionLink) string {
 }
 
 // emailCommand handles POST /emails/:id/command/:command
-func emailCommand(c echo.Context) error {
+func emailCommand(c models.Context) error {
 	id := c.Param("id")
 	api := middleware.GetGmail(c)
 	var err error
@@ -43,9 +40,10 @@ func emailCommand(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		return htmx.Redirect(c, url)
+		// Return Open struct which the render method will handle as an HTMX redirect
+		return c.Render(nil, &models.Open{URL: url})
 	case "todo":
-		return c.String(http.StatusNotImplemented, "TODO: Move email to Todoist (not yet implemented)")
+		return fmt.Errorf("TODO: Move email to Todoist (not yet implemented)")
 	default:
 		return fmt.Errorf("invalid command: %s", c.Param("command"))
 	}
@@ -54,5 +52,5 @@ func emailCommand(c echo.Context) error {
 		return err
 	}
 
-	return c.Redirect(http.StatusSeeOther, "/")
+	return c.Redirect(IndexAction.Link())
 }

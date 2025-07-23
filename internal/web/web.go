@@ -72,9 +72,9 @@ func NewServer() (*echo.Echo, error) {
 	for _, action := range models.Actions {
 		switch action.Method {
 		case "GET":
-			e.GET(action.Path, action.Handler()).Name = action.ID
+			e.GET(action.Path, action.WrappedHandler()).Name = action.ID
 		case "POST":
-			e.POST(action.Path, action.Handler()).Name = action.ID
+			e.POST(action.Path, action.WrappedHandler()).Name = action.ID
 		default:
 			slog.Error("unknown action method", "method", action.Method)
 		}
