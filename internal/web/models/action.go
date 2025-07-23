@@ -7,11 +7,11 @@ import (
 )
 
 type Action struct {
-	ID               string `json:"id"`
-	Method           string `json:"method"`
-	Path             string `json:"path"`
-	Handler Handler
-	Label            func(link ActionLink) string
+	ID      string `json:"id"`
+	Method  string `json:"method"`
+	Path    string `json:"path"`
+	Handler func(c Context) error
+	Label   func(link ActionLink) string
 }
 
 type LinkContextKey struct{}

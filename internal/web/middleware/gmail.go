@@ -43,7 +43,11 @@ func Gmail() echo.MiddlewareFunc {
 	}
 }
 
-func GetGmail(c echo.Context) *gmailapi.MessageList {
+type ContextGetter interface {
+	Get(key string) any
+}
+
+func GetGmail(c ContextGetter) *gmailapi.MessageList {
 	val, ok := c.Get("gmail").(*gmailapi.MessageList)
 	if !ok {
 		return nil

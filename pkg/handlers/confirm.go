@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 func init() {
@@ -14,11 +12,11 @@ func init() {
 }
 
 var ConfirmAction models.Action = models.Action{
-	ID:               "confirm",
-	Method:           "GET",
-	Path:             "/confirm",
-	UnwrappedHandler: confirm,
-	Label:            confirmLabel,
+	ID:      "confirm",
+	Method:  "GET",
+	Path:    "/confirm",
+	Handler: confirm,
+	Label:   confirmLabel,
 }
 
 func confirmLabel(link models.ActionLink) string {
@@ -26,7 +24,7 @@ func confirmLabel(link models.ActionLink) string {
 }
 
 // Confirm handles the /confirm endpoint
-func confirm(c echo.Context) error {
+func confirm(c models.Context) error {
 	link := c.QueryParam("link")
 	var actionObj models.ActionLink
 	if err := json.Unmarshal([]byte(link), &actionObj); err != nil {
@@ -35,5 +33,5 @@ func confirm(c echo.Context) error {
 
 	actionObj.Confirm = false
 
-	return pages.Confirm([]models.ActionLink{actionObj}).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(nil, nil)
 }
