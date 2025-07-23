@@ -1,10 +1,40 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 )
+
+func LinkFormAction(c echo.Context, link ActionLink) string {
+	var params []any
+	for _, param := range link.Params {
+		params = append(params, param)
+	}
+
+	return c.Echo().Reverse(link.ActionID, params...)
+}
+
+func LinkURL(c echo.Context, link ActionLink) (string, error) {
+	if link.Action().Method != "GET" {
+		return "", fmt.Errorf("method not GET")
+	}
+
+	a := LinkFormAction(c, link)
+	u, err := url.Parse(a)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse echo reversed url: %w", err)
+	}
+
+	qs := u.Query()
+	for name, value := range link.Fields {
+		qs.Set(name, value)
+	}
+	u.RawQuery = qs.Encode()
+	return u.String(), nil
+}
 
 // EchoContext is a wrapper around echo.Context that implements our custom Context interface.
 type EchoContext struct {
@@ -22,16 +52,11 @@ func NewEchoContext(c echo.Context, renderer Renderer) *EchoContext {
 
 // Redirect redirects to the URL generated from the ActionLink.
 func (c *EchoContext) Redirect(link ActionLink) error {
-	// Get the action from the link
-	action := link.Action()
+	url, err := LinkURL(c.Context, link)
+	if err != nil {
+		return err
+	}
 
-	// Build URL with appropriate parameters
-	url := action.Path
-
-	// Add query parameters if needed - simplified implementation
-	// In a real implementation, you might need to handle path parameters as well
-
-	// For now, redirect to the path defined in the action
 	return c.Context.Redirect(http.StatusSeeOther, url)
 }
 

@@ -33,5 +33,5 @@ func confirm(c models.Context) error {
 
 	actionObj.Confirm = false
 
-	return c.Render(nil, nil)
+	return c.Render([]models.ActionLink{actionObj}, nil)
 }
