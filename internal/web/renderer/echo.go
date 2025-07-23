@@ -34,6 +34,10 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 	case models.Open:
 		return htmx.Redirect(c, data.URL)
 	case models.EmailResponse:
+		// Used for both /email and /email-group
+		if current.Action().ID == "email-group" {
+			return pages.GroupEmail(data, actions).Render(c.Request().Context(), c.Response().Writer)
+		}
 		return pages.Email(data, actions).Render(c.Request().Context(), c.Response().Writer)
 	case models.FiltersPageData:
 		return pages.Filters(data.AccountID, data.Filters, actions).Render(c.Request().Context(), c.Response().Writer)

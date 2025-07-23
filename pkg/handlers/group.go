@@ -3,10 +3,8 @@ package handlers
 import (
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 func init() {
@@ -14,11 +12,11 @@ func init() {
 }
 
 var EmailGroupAction models.Action = models.Action{
-	ID:               "email-group",
-	Method:           "GET",
-	Path:             "/emails/:id/group",
-	UnwrappedHandler: groupEmail,
-	Label:            groupLabel,
+	ID:      "email-group",
+	Method:  "GET",
+	Path:    "/emails/:id/group",
+	Handler: groupEmail,
+	Label:   groupLabel,
 }
 
 func groupLabel(link models.ActionLink) string {
@@ -26,7 +24,7 @@ func groupLabel(link models.ActionLink) string {
 }
 
 // GroupEmail handles GET /emails/:id/group
-func groupEmail(c echo.Context) error {
+func groupEmail(c models.Context) error {
 	id := c.Param("id")
 
 	email, err := util.GetEmail(c, id)
@@ -55,5 +53,5 @@ func groupEmail(c echo.Context) error {
 			))
 	}
 
-	return pages.GroupEmail(email.View, actions).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, email.View)
 }
