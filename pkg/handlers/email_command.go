@@ -40,8 +40,7 @@ func emailCommand(c models.Context) error {
 		if err != nil {
 			return err
 		}
-		// Return Open struct which the render method will handle as an HTMX redirect
-		return c.Render(nil, &models.Open{URL: url})
+		return c.Render(nil, models.Open{URL: url})
 	case "todo":
 		return fmt.Errorf("TODO: Move email to Todoist (not yet implemented)")
 	default:

@@ -3,13 +3,10 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/pkg/db"
 )
 
@@ -18,24 +15,24 @@ func init() {
 }
 
 var FiltersAction models.Action = models.Action{
-	ID:               "filters",
-	Method:           "GET",
-	Path:             "/filters",
-	UnwrappedHandler: filters,
-	Label:            filtersLabel,
+	ID:      "filters",
+	Method:  "GET",
+	Path:    "/filters",
+	Handler: filters,
+	Label:   filtersLabel,
 }
 
 func filtersLabel(link models.ActionLink) string {
 	return "Filters"
 }
 
-func filters(c echo.Context) error {
+func filters(c models.Context) error {
 	gmail := middleware.GetGmail(c)
 
 	idStr := c.QueryParam("id")
 	if idStr == "" {
-		for id, _ := range gmail.API {
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/filters?id=%d", id))
+		for id := range gmail.API {
+			return c.Redirect(FiltersAction.Link(models.WithParams(fmt.Sprintf("%d", id))))
 		}
 		return errors.New("no accounts")
 	}
@@ -52,11 +49,12 @@ func filters(c echo.Context) error {
 		return err
 	}
 
-	// filters := []*gmail.Filter{}
-
 	actions := []models.ActionLink{
 		FiltersRefreshAction.Link(),
 	}
 
-	return pages.Filters(accountID, filters, actions).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, models.FiltersPageData{
+		AccountID: accountID,
+		Filters:   filters,
+	})
 }
