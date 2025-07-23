@@ -11,16 +11,18 @@ import (
 )
 
 func init() {
+	FiltersAction = models.Action{
+		ID:      "filters",
+		Method:  "GET",
+		Path:    "/filters",
+		Handler: filters,
+		Label:   filtersLabel,
+	}
 	models.Register(FiltersAction)
 }
 
-var FiltersAction models.Action = models.Action{
-	ID:      "filters",
-	Method:  "GET",
-	Path:    "/filters",
-	Handler: filters,
-	Label:   filtersLabel,
-}
+var FiltersAction models.Action
+
 
 func filtersLabel(link models.ActionLink) string {
 	return "Filters"

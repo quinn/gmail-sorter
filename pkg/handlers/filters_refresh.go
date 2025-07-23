@@ -6,16 +6,18 @@ import (
 )
 
 func init() {
+	FiltersRefreshAction = models.Action{
+		ID:      "filters-refresh",
+		Method:  "POST",
+		Path:    "/filters/refresh",
+		Handler: filtersRefresh,
+		Label:   filtersRefreshLabel,
+	}
 	models.Register(FiltersRefreshAction)
 }
 
-var FiltersRefreshAction models.Action = models.Action{
-	ID:      "filters-refresh",
-	Method:  "POST",
-	Path:    "/filters/refresh",
-	Handler: filtersRefresh,
-	Label:   filtersRefreshLabel,
-}
+var FiltersRefreshAction models.Action
+
 
 func filtersRefreshLabel(link models.ActionLink) string {
 	return "Refresh Filters"
