@@ -30,7 +30,7 @@ func (a Action) WrappedHandler() echo.HandlerFunc {
 		ctx := c.Request().Context()
 		withValue := context.WithValue(ctx, LinkContextKey{}, &link)
 		c.SetRequest(c.Request().WithContext(withValue))
-		return a.Handler(NewEchoContext(c))
+		return a.Handler(NewEchoContext(c, renderer))
 	}
 }
 
