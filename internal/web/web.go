@@ -10,6 +10,7 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
+	"github.com/quinn/gmail-sorter/internal/web/renderer"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
 	"github.com/quinn/gmail-sorter/pkg/handlers"
@@ -22,6 +23,9 @@ var assetsFS embed.FS
 func NewServer() (*echo.Echo, error) {
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
+
+	// Initialize the global renderer for all EchoContext instances
+	renderer := renderer.NewEchoRenderer()
 
 	// Attach the fingerprinted assets.
 	assets.Attach(
@@ -72,9 +76,9 @@ func NewServer() (*echo.Echo, error) {
 	for _, action := range models.Actions {
 		switch action.Method {
 		case "GET":
-			e.GET(action.Path, action.WrappedHandler()).Name = action.ID
+			e.GET(action.Path, action.WrappedHandler(renderer)).Name = action.ID
 		case "POST":
-			e.POST(action.Path, action.WrappedHandler()).Name = action.ID
+			e.POST(action.Path, action.WrappedHandler(renderer)).Name = action.ID
 		default:
 			slog.Error("unknown action method", "method", action.Method)
 		}

@@ -20,8 +20,8 @@ func NewEchoRenderer() *EchoRenderer {
 	return &EchoRenderer{}
 }
 
-// RenderPage renders a page based on the action ID and additional data.
-func (r *EchoRenderer) RenderPage(c echo.Context, current models.ActionLink, actions []models.ActionLink, data interface{}) error {
+// Render renders a page based on the action ID and additional data.
+func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions []models.ActionLink, data interface{}) error {
 	// Render based on actionID
 	switch current.Action().ID {
 	case "confirm":

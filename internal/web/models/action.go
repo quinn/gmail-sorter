@@ -16,7 +16,7 @@ type Action struct {
 
 type LinkContextKey struct{}
 
-func (a Action) WrappedHandler() echo.HandlerFunc {
+func (a Action) WrappedHandler(renderer Renderer) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		fields := map[string]string{}
 		if err := c.Bind(&fields); err != nil {
