@@ -8,3 +8,10 @@ type FiltersPageData struct {
 	AccountID uint
 	Filters   []*gmail.Filter
 }
+
+// GroupByPageData is used for rendering the group-by page.
+type GroupByPageData struct {
+	GroupType string
+	Value     string
+	Emails    []EmailResponse
+}

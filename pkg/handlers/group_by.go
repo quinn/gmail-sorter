@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 func init() {
@@ -14,18 +12,18 @@ func init() {
 }
 
 var GroupByEmailAction models.Action = models.Action{
-	ID:               "group-by",
-	Method:           "GET",
-	Path:             "/account/:id/group-by/:type",
-	UnwrappedHandler: groupByEmail,
-	Label:            groupByLabel,
+	ID:      "group-by",
+	Method:  "GET",
+	Path:    "/account/:id/group-by/:type",
+	Handler: groupByEmail,
+	Label:   groupByLabel,
 }
 
 func groupByLabel(link models.ActionLink) string {
 	return "Group By " + link.Params[1]
 }
 
-func groupQuery(c echo.Context) (string, error) {
+func groupQuery(c models.Context) (string, error) {
 	groupType := c.Param("type") // domain, from, to
 	val := c.QueryParam("val")
 
@@ -55,9 +53,10 @@ func groupQuery(c echo.Context) (string, error) {
 }
 
 // GroupByEmail handles GET /emails/:id/group/by/:type
-func groupByEmail(c echo.Context) error {
+func groupByEmail(c models.Context) error {
 	groupType := c.Param("type") // domain, from, to
 	val := c.QueryParam("val")
+
 	query, err := groupQuery(c)
 	if err != nil {
 		return err
@@ -70,7 +69,7 @@ func groupByEmail(c echo.Context) error {
 	slog.Info("Fetching emails matching query: ", "query", query)
 	res, err := api.Service.Users.Messages.List("me").Q(query).MaxResults(500).Do()
 	if err != nil {
-		return echo.NewHTTPError(500, "Failed to fetch emails: "+err.Error())
+		return err
 	}
 
 	var groupedEmails []models.EmailResponse
@@ -93,5 +92,9 @@ func groupByEmail(c echo.Context) error {
 			models.WithConfirm(),
 		),
 	}
-	return pages.GroupBy(groupType, val, groupedEmails, actions).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, models.GroupByPageData{
+		GroupType: groupType,
+		Value:     val,
+		Emails:    groupedEmails,
+	})
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/util"
@@ -30,7 +29,7 @@ func groupByDeleteLabel(link models.ActionLink) string {
 	return "Delete By \"" + link.Params[1] + "\": " + link.Fields["val"]
 }
 
-func getID(c echo.Context) (uint, error) {
+func getID(c models.Context) (uint, error) {
 	idStr := c.Param("id")
 	var accountID uint
 	if idStr == "" {
@@ -46,7 +45,7 @@ func getID(c echo.Context) (uint, error) {
 	return accountID, nil
 }
 
-func getAPI(c echo.Context) (*gmailapi.GmailAPI, error) {
+func getAPI(c models.Context) (*gmailapi.GmailAPI, error) {
 	gm := middleware.GetGmail(c)
 	accountID, err := getID(c)
 	if err != nil {
@@ -61,7 +60,7 @@ func getAPI(c echo.Context) (*gmailapi.GmailAPI, error) {
 	return api, nil
 }
 
-func groupByDelete(c echo.Context) error {
+func groupByDelete(c models.Context) error {
 	gm := middleware.GetGmail(c)
 	accountID, err := getID(c)
 	if err != nil {
