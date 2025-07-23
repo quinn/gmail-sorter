@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/models"
-	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 )
 
 func init() {
@@ -14,19 +12,18 @@ func init() {
 }
 
 var SuccessAction models.Action = models.Action{
-	ID:               "success",
-	Method:           "GET",
-	Path:             "/success",
-	UnwrappedHandler: success,
-	Label:            successLabel,
+	ID:      "success",
+	Method:  "GET",
+	Path:    "/success",
+	Handler: success,
+	Label:   successLabel,
 }
 
 func successLabel(link models.ActionLink) string {
 	return "Success"
 }
 
-func success(c echo.Context) error {
-
+func success(c models.Context) error {
 	link := c.QueryParam("link")
 	var actionObj models.ActionLink
 	if err := json.Unmarshal([]byte(link), &actionObj); err != nil {
@@ -37,5 +34,5 @@ func success(c echo.Context) error {
 		IndexAction.Link(),
 	}
 
-	return pages.Success(actions, actionObj).Render(c.Request().Context(), c.Response().Writer)
+	return c.Render(actions, actionObj)
 }

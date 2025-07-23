@@ -5,16 +5,17 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/util"
 )
 
-func init() {
-	models.Register(EmailAction)
-}
+var EmailAction models.Action
 
-var EmailAction models.Action = models.Action{
-	ID:      "email",
-	Method:  "GET",
-	Path:    "/emails/:id",
-	Handler: email,
-	Label:   emailLabel,
+func init() {
+	EmailAction = models.Action{
+		ID:      "email",
+		Method:  "GET",
+		Path:    "/emails/:id",
+		Handler: email,
+		Label:   emailLabel,
+	}
+	models.Register(EmailAction)
 }
 
 func emailLabel(link models.ActionLink) string {

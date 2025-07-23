@@ -7,16 +7,17 @@ import (
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
-func init() {
-	models.Register(EmailCommandAction)
-}
+var EmailCommandAction models.Action
 
-var EmailCommandAction models.Action = models.Action{
-	ID:      "email-command",
-	Method:  "POST",
-	Path:    "/emails/:id/command/:command",
-	Handler: emailCommand,
-	Label:   emailCommandLabel,
+func init() {
+	EmailCommandAction = models.Action{
+		ID:      "email-command",
+		Method:  "POST",
+		Path:    "/emails/:id/command/:command",
+		Handler: emailCommand,
+		Label:   emailCommandLabel,
+	}
+	models.Register(EmailCommandAction)
 }
 
 func emailCommandLabel(link models.ActionLink) string {

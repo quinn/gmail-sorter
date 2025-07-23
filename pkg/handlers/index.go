@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
@@ -13,11 +10,11 @@ func init() {
 }
 
 var IndexAction models.Action = models.Action{
-	ID:               "index",
-	Method:           "GET",
-	Path:             "/",
-	Label:            indexLabel,
-	UnwrappedHandler: index,
+	ID:      "index",
+	Method:  "GET",
+	Path:    "/",
+	Label:   indexLabel,
+	Handler: index,
 }
 
 func indexLabel(link models.ActionLink) string {
@@ -25,7 +22,7 @@ func indexLabel(link models.ActionLink) string {
 }
 
 // index renders the index page
-func index(c echo.Context) error {
+func index(c models.Context) error {
 	gm := middleware.GetGmail(c)
 
 	if len(gm.Messages) == 0 {
@@ -35,5 +32,6 @@ func index(c echo.Context) error {
 	}
 
 	m := gm.Messages[0]
-	return c.Redirect(http.StatusFound, "/emails/"+m.Message.Id)
+	link := EmailAction.Link(models.WithParams(m.Message.Id))
+	return c.Redirect(link)
 }

@@ -28,6 +28,12 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 		return pages.Confirm(actions).Render(c.Request().Context(), c.Response().Writer)
 	case "menu":
 		return pages.Menu().Render(c.Request().Context(), c.Response().Writer)
+	case "success":
+		link, ok := data.(models.ActionLink)
+		if !ok {
+			return fmt.Errorf("expected ActionLink, got %T", data)
+		}
+		return pages.Success(actions, link).Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	switch data := data.(type) {
@@ -43,7 +49,7 @@ func (r *EchoRenderer) Render(c echo.Context, current models.ActionLink, actions
 		return pages.Filters(data.AccountID, data.Filters, actions).Render(c.Request().Context(), c.Response().Writer)
 	case models.GroupByPageData:
 		return pages.GroupBy(data.GroupType, data.Value, data.Emails, actions).Render(c.Request().Context(), c.Response().Writer)
-case models.GroupByDeleteSuccessPageData:
+	case models.GroupByDeleteSuccessPageData:
 		return pages.GroupByDeleteSuccess(actions, data.GroupType, data.Value, data.Count).Render(c.Request().Context(), c.Response().Writer)
 	default:
 		return fmt.Errorf("no renderer found for action ID: %s", current.Action().ID)
