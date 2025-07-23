@@ -10,13 +10,13 @@ type Action struct {
 	ID               string `json:"id"`
 	Method           string `json:"method"`
 	Path             string `json:"path"`
-	UnwrappedHandler func(c echo.Context) error
+	Handler Handler
 	Label            func(link ActionLink) string
 }
 
 type LinkContextKey struct{}
 
-func (a Action) Handler() echo.HandlerFunc {
+func (a Action) WrappedHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		fields := map[string]string{}
 		if err := c.Bind(&fields); err != nil {
@@ -30,7 +30,7 @@ func (a Action) Handler() echo.HandlerFunc {
 		ctx := c.Request().Context()
 		withValue := context.WithValue(ctx, LinkContextKey{}, &link)
 		c.SetRequest(c.Request().WithContext(withValue))
-		return a.UnwrappedHandler(c)
+		return a.Handler(NewEchoContext(c))
 	}
 }
 

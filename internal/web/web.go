@@ -8,11 +8,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/quinn/gmail-sorter/internal/web/handlers"
 	"github.com/quinn/gmail-sorter/internal/web/middleware"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 	"github.com/quinn/gmail-sorter/internal/web/views/pages"
 	"github.com/quinn/gmail-sorter/internal/web/views/ui"
+	"github.com/quinn/gmail-sorter/pkg/handlers"
 	"go.quinn.io/ccf/assets"
 )
 
@@ -59,15 +59,15 @@ func NewServer() (*echo.Echo, error) {
 	e.Use(middleware.Gmail())
 	e.Use(middleware.Messages())
 
-	e.GET("/healthz", handlers.Health)
-	e.GET("/oauth/:provider/start", handlers.OauthStart)
-	e.GET("/oauth/:provider/callback", handlers.OauthCallback)
-	e.GET("/accounts", handlers.Accounts)
-	e.GET("/accounts/new", handlers.AccountProviderSelect)
-	e.POST("/accounts", handlers.CreateAccount)
-	e.GET("/accounts/:id", handlers.GetAccount)
-	e.PUT("/accounts/:id", handlers.UpdateAccount)
-	e.DELETE("/accounts/:id", handlers.DeleteAccount)
+	e.GET("/healthz", Health)
+	e.GET("/oauth/:provider/start", OauthStart)
+	e.GET("/oauth/:provider/callback", OauthCallback)
+	e.GET("/accounts", Accounts)
+	e.GET("/accounts/new", AccountProviderSelect)
+	e.POST("/accounts", CreateAccount)
+	e.GET("/accounts/:id", GetAccount)
+	e.PUT("/accounts/:id", UpdateAccount)
+	e.DELETE("/accounts/:id", DeleteAccount)
 
 	for _, action := range models.Actions {
 		switch action.Method {
