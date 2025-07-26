@@ -12,7 +12,7 @@ func GetEmail(c middleware.ContextGetter, id string) (*gmailapi.Message, error) 
 
 	email, err := gm.GetFullMessage(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get email: %w", err)
+		return nil, fmt.Errorf("failed to get email(%s): %w", id, err)
 	}
 
 	return email, nil

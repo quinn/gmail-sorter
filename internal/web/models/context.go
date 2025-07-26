@@ -6,7 +6,5 @@ type Context interface {
 	FormValue(name string) string
 	Redirect(link ActionLink) error
 	Render(actions []ActionLink, data any) error
-	Get(key string) interface{}
+	Get(key string) any
 }
-
-type Handler func(c Context) error

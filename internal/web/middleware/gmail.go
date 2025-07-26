@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,7 +51,7 @@ type ContextGetter interface {
 func GetGmail(c ContextGetter) *gmailapi.MessageList {
 	val, ok := c.Get("gmail").(*gmailapi.MessageList)
 	if !ok {
-		return nil
+		panic(fmt.Sprintf("failed to get gmail. val is %T", c.Get("gmail")))
 	}
 
 	return val
