@@ -6,3 +6,6 @@ build:
 
 dev:
   go tool goreman -b 5001 start
+
+tui:
+  go tool goreman -b 5001 start tui

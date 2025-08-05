@@ -80,26 +80,59 @@ func spaceBetween(items []string, totalWidth int) string {
 	return b.String()
 }
 
+var (
+	bottomJoint    = "┴"
+	topJoint       = "┬"
+	highlightColor = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
+
+	buttonStyle = lipgloss.
+			NewStyle().
+			Border(lipgloss.RoundedBorder(), true, false, true, true).
+			BorderForeground(highlightColor).
+			Padding(0)
+)
+
 // View renders the current page to a string.
 func (m Model) View() string {
 	if m.width == 0 {
 		return "Loading..."
 	}
+	doc := strings.Builder{}
 	// On first render, run the associated handler to populate actions/data.
 	ctx := NewContext(&m)
 	if err := m.page.Current.Action().Handler(ctx); err != nil {
 		return fmt.Sprintf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
 	}
 
-	s := fmt.Sprintf("### %s ###\n\n", m.page.Current.Action().ID)
+	// s := fmt.Sprintf("### %s ###\n\n", m.page.Current.Action().ID)
 	var actions []string
-	if len(m.page.Actions) > 0 {
-		s += "Available actions:\n"
-		for i, a := range m.page.Actions {
-			actions = append(actions, fmt.Sprintf("%d. %s", i+1, a.Action().Label(a)))
+
+	shortcuts := models.AssignShortcuts(m.page.Actions)
+
+	for i, act := range m.page.Actions {
+		isFirst := i == 0
+		isLast := i == len(m.page.Actions)-1
+		// fmt.Sprintf("%d %t %t\n", i, isFirst, isLast)
+		style := buttonStyle
+		text := fmt.Sprintf("%s [%s]", act.Action().Label(act), string(shortcuts[i]))
+
+		border, _, _, _, _ := style.GetBorder()
+		if !isFirst {
+			border.BottomLeft = bottomJoint
+			border.TopLeft = topJoint
 		}
+		style = style.Border(border)
+		style = style.BorderRight(false)
+
+		if isLast {
+			style = style.BorderRight(true)
+		}
+		style = style.Width(m.width/len(m.page.Actions) - style.GetHorizontalFrameSize()).Align(lipgloss.Center)
+		actions = append(actions, style.Render(text))
 	}
-	s += spaceBetween(actions, m.width) + "\n"
-	s += "\nPress q to quit."
-	return s
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, actions...)
+	doc.WriteString(row)
+	// s += spaceBetween(actions, m.width) + "\n"
+	return doc.String()
 }
