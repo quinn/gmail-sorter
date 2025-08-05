@@ -13,12 +13,12 @@ import (
 // Context implements models.Context for terminal usage.
 // For now, URL/query/param helpers return empty strings.
 type Context struct {
-	model *Model
+	page *Page
 }
 
 // NewContext constructs a terminal context tied to a Bubble Tea model.
-func NewContext(m *Model) *Context {
-	return &Context{model: m}
+func NewContext(p *Page) *Context {
+	return &Context{page: p}
 }
 
 func ParamNames(pattern string) ([]string, error) {
@@ -44,31 +44,31 @@ func ParamNames(pattern string) ([]string, error) {
 }
 
 func (c *Context) Param(name string) string {
-	names, err := ParamNames(c.model.page.Current.Action().Path)
+	names, err := ParamNames(c.page.Current.Action().Path)
 	if err != nil {
 		return fmt.Sprintf("ERROR: %v", err)
 	}
 	for idx, n := range names {
 		if n == name {
-			return c.model.page.Current.Params[idx]
+			return c.page.Current.Params[idx]
 		}
 	}
 	return "PARAM_NOT_FOUND"
 }
 
-func (c *Context) QueryParam(name string) string { return "" }
-func (c *Context) FormValue(name string) string  { return "" }
+func (c *Context) QueryParam(name string) string { return c.page.Current.Fields[name] }
+func (c *Context) FormValue(name string) string  { return c.page.Current.Fields[name] }
 
 // Redirect executes the target action immediately.
 func (c *Context) Redirect(link models.ActionLink) error {
-	c.model.page.Current = link
-	return c.model.page.Current.Action().Handler(c)
+	c.page.Current = link
+	return c.page.Current.Action().Handler(c)
 }
 
 func (c *Context) Render(actions []models.ActionLink, data any) error {
 	// Update the model's page; rendering will be handled in Model.View.
-	c.model.page.Actions = actions
-	c.model.page.Data = data
+	c.page.Actions = actions
+	c.page.Data = data
 	return nil
 }
 

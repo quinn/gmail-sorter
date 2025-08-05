@@ -18,20 +18,34 @@ type Page struct {
 	Data    any
 }
 
+func RenderPage(link models.ActionLink) (Page, error) {
+	page := Page{Current: link}
+	ctx := NewContext(&page)
+	if err := page.Current.Action().Handler(ctx); err != nil {
+		return page, err
+	}
+	return page, nil
+}
+
 // PageMsg is sent to the Bubble Tea program whenever we want to display a new page.
-type PageMsg struct{ Page Page }
+// type PageMsg struct{ Page Page }
 
 // Model implements tea.Model and holds the current page state.
 type Model struct {
 	page  Page
+	err   error
 	width int
 }
 
 // NewModel constructs a new Bubble Tea model primed with the first page.
-func NewModel(p Page) Model {
+func NewModel(initLink models.ActionLink) (Model, error) {
 	m := Model{}
-	mm, _ := m.Update(PageMsg{Page: p})
-	return mm.(Model)
+	page, err := RenderPage(initLink)
+	if err != nil {
+		return m, err
+	}
+	m.page = page
+	return m, nil
 }
 
 // Init satisfies tea.Model. No initial command yet.
@@ -58,16 +72,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Printf("Key %c, Shortcut %c\n", pressed, key)
 				if pressed == key {
 					fmt.Printf("Pressed %c, triggering action %s\n", pressed, m.page.Actions[i].Action().ID)
-					newPage := Page{Current: m.page.Actions[i]}
-					return m, func() tea.Msg { return PageMsg{Page: newPage} }
+					newPage, err := RenderPage(m.page.Actions[i])
+					if err != nil {
+						m.err = err
+						return m, nil
+					}
+					m.page = newPage
+					return m, nil
 				}
 			}
-		}
-	case PageMsg:
-		m.page = msg.Page
-		ctx := NewContext(&m)
-		if err := m.page.Current.Action().Handler(ctx); err != nil {
-			fmt.Printf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
 		}
 	}
 
@@ -88,6 +101,9 @@ var (
 
 // View renders the current page to a string.
 func (m Model) View() string {
+	if m.err != nil {
+		return fmt.Sprintf("Error: %v", m.err)
+	}
 	if m.width == 0 {
 		return "Loading..."
 	}

@@ -24,14 +24,16 @@ func Render(current models.ActionLink, actions []models.ActionLink, data interfa
 
 	// Handle data-based rendering
 	switch typed := data.(type) {
+	case models.Open:
+		panic("not implemented")
+	case models.EmailResponse:
+		return views.Email(typed, actions), nil
 	case models.FiltersPageData:
 		return views.Filters(typed.AccountID, typed.Filters, actions), nil
 	case models.GroupByPageData:
 		return views.GroupBy(typed.GroupType, typed.Value, typed.Emails, actions), nil
 	case models.GroupByDeleteSuccessPageData:
 		return views.GroupByDeleteSuccess(actions, typed.GroupType, typed.Value, typed.Count), nil
-	case models.EmailResponse:
-		return views.Email(typed, actions), nil
 	}
 
 	return "", fmt.Errorf("no TUI renderer implemented for action ID: %s", current.Action().ID)

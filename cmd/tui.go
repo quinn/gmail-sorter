@@ -25,7 +25,10 @@ var tuiCmd = &cobra.Command{
 
 		fmt.Println("startLink: ", startLink.Action().ID)
 		// Create Bubble Tea program with initial page
-		prog := tui.NewProgram(tui.Page{Current: startLink})
+		prog, err := tui.NewProgram(startLink)
+		if err != nil {
+			log.Fatalf("bubbletea run: %v", err)
+		}
 
 		// Run program (blocks until quit)
 		if _, err := prog.Run(); err != nil {
