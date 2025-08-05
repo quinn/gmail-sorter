@@ -10,6 +10,8 @@ import (
 func Render(current models.ActionLink, actions []models.ActionLink, data interface{}) (string, error) {
 	// Render based on actionID
 	switch current.Action().ID {
+	case "index":
+		return "", nil
 	case "confirm":
 		return views.Confirm(actions), nil
 	case "success":

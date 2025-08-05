@@ -28,13 +28,18 @@ type Model struct {
 }
 
 // NewModel constructs a new Bubble Tea model primed with the first page.
-func NewModel(p Page) Model { return Model{page: p} }
+func NewModel(p Page) Model {
+	m := Model{}
+	mm, _ := m.Update(PageMsg{Page: p})
+	return mm.(Model)
+}
 
 // Init satisfies tea.Model. No initial command yet.
 func (m Model) Init() tea.Cmd { return nil }
 
 // Update handles messages.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	fmt.Printf("Actions (%d): %v\n", len(m.page.Actions), m.page.Actions)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -43,8 +48,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "q" || msg.Type == tea.KeyCtrlC {
 			return m, tea.Quit
 		}
+
+		// Handle single-letter shortcut keys for actions
+		fmt.Printf("Pressed %s\n", msg.String())
+		if len(msg.String()) == 1 && len(m.page.Actions) > 0 {
+			shortcuts := models.AssignShortcuts(m.page.Actions)
+			pressed := []rune(msg.String())[0]
+			for i, key := range shortcuts {
+				fmt.Printf("Key %c, Shortcut %c\n", pressed, key)
+				if pressed == key {
+					fmt.Printf("Pressed %c, triggering action %s\n", pressed, m.page.Actions[i].Action().ID)
+					newPage := Page{Current: m.page.Actions[i]}
+					return m, func() tea.Msg { return PageMsg{Page: newPage} }
+				}
+			}
+		}
 	case PageMsg:
 		m.page = msg.Page
+		ctx := NewContext(&m)
+		if err := m.page.Current.Action().Handler(ctx); err != nil {
+			fmt.Printf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
+		}
 	}
 
 	return m, nil
@@ -69,10 +93,6 @@ func (m Model) View() string {
 	}
 	doc := strings.Builder{}
 	// On first render, run the associated handler to populate actions/data.
-	ctx := NewContext(&m)
-	if err := m.page.Current.Action().Handler(ctx); err != nil {
-		return fmt.Sprintf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
-	}
 
 	// s := fmt.Sprintf("### %s ###\n\n", m.page.Current.Action().ID)
 	var actions []string

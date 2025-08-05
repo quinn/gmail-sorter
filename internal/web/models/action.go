@@ -86,5 +86,5 @@ func (l ActionLink) Action() Action {
 		}
 	}
 
-	panic("action not found")
+	panic("action not found: " + l.ActionID)
 }
