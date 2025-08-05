@@ -20,7 +20,18 @@ func Render(current models.ActionLink, actions []models.ActionLink, data interfa
 		return views.Success(actions, link), nil
 	}
 
-	// For now, only confirm and success are supported for TUI.
+	// Handle data-based rendering
+	switch typed := data.(type) {
+	case models.FiltersPageData:
+		return views.Filters(typed.AccountID, typed.Filters, actions), nil
+	case models.GroupByPageData:
+		return views.GroupBy(typed.GroupType, typed.Value, typed.Emails, actions), nil
+	case models.GroupByDeleteSuccessPageData:
+		return views.GroupByDeleteSuccess(actions, typed.GroupType, typed.Value, typed.Count), nil
+	case models.EmailResponse:
+		return views.Email(typed, actions), nil
+	}
+
 	return "", fmt.Errorf("no TUI renderer implemented for action ID: %s", current.Action().ID)
 
 }

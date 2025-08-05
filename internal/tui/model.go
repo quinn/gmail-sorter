@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/quinn/gmail-sorter/internal/web/models"
 )
 
@@ -87,6 +88,8 @@ func (m Model) View() string {
 	if err != nil {
 		return fmt.Sprintf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
 	}
+
+	view = wordwrap.String(view, m.width)
 
 	for i, act := range m.page.Actions {
 		isFirst := i == 0
