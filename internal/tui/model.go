@@ -49,37 +49,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func spaceBetween(items []string, totalWidth int) string {
-	n := len(items)
-	if n == 0 {
-		return ""
-	}
-	sum := 0
-	for _, it := range items {
-		sum += lipgloss.Width(it)
-	}
-	if n == 1 || totalWidth <= sum {
-		return strings.Join(items, " ")
-	}
-	remaining := totalWidth - sum
-	gapCount := n - 1
-	base := remaining / gapCount
-	extra := remaining % gapCount
-
-	var b strings.Builder
-	for i, it := range items {
-		b.WriteString(it)
-		if i < gapCount {
-			gap := base
-			if i < extra {
-				gap++ // distribute leftovers to the left
-			}
-			b.WriteString(strings.Repeat(" ", gap))
-		}
-	}
-	return b.String()
-}
-
 var (
 	bottomJoint    = "┴"
 	topJoint       = "┬"
@@ -109,6 +78,16 @@ func (m Model) View() string {
 
 	shortcuts := models.AssignShortcuts(m.page.Actions)
 
+	viewStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(highlightColor).
+		Padding(0)
+
+	view, err := Render(m.page.Current, m.page.Actions, m.page.Data)
+	if err != nil {
+		return fmt.Sprintf("### %s failed: %v ###\n\n", m.page.Current.Action().ID, err)
+	}
+
 	for i, act := range m.page.Actions {
 		isFirst := i == 0
 		isLast := i == len(m.page.Actions)-1
@@ -132,6 +111,7 @@ func (m Model) View() string {
 	}
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top, actions...)
+	row = lipgloss.JoinVertical(lipgloss.Top, viewStyle.Render(view), row)
 	doc.WriteString(row)
 	// s += spaceBetween(actions, m.width) + "\n"
 	return doc.String()
